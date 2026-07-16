@@ -118,19 +118,16 @@ struct HomeView: View {
                 .background {
                     Circle()
                         .fill(.white.opacity(0.05))
-                        .overlay {
-                            Circle().stroke(
-                                store.archived.isEmpty
-                                    ? Color.clear
-                                    : Color(hex: 0x8B7BFF).opacity(0.4),
-                                lineWidth: 1
-                            )
-                        }
-                        .shadow(
-                            color: store.archived.isEmpty
-                                ? .clear
-                                : Color(hex: 0x8B7BFF).opacity(0.25),
-                            radius: 10
+                }
+                .overlay {
+                    // Same 1px top-lit hairline as GlassCard (strokeBorder = crisp edge).
+                    Circle()
+                        .strokeBorder(
+                            LinearGradient(
+                                colors: [.white.opacity(0.14), .white.opacity(0.03)],
+                                startPoint: .top, endPoint: .bottom
+                            ),
+                            lineWidth: 1
                         )
                 }
                 .scaleEffect(moonReceiving ? 1.12 : 1)

@@ -60,6 +60,24 @@
     transition: transform 0.15s cubic-bezier(0.3,1.4,0.6,1);
   }
   .icon-btn:active { transform: scale(0.92); }
+  /* Home moon — identical hairline technique as .glass (1px masked ring) */
+  #btn-archive {
+    position: relative; z-index: 46;
+    background: rgba(255,255,255,0.06);
+    border: none;
+    overflow: visible;
+  }
+  #btn-archive::before {
+    content: "";
+    position: absolute; inset: 0;
+    border-radius: 50%;
+    padding: 1px;
+    background: linear-gradient(rgba(255,255,255,0.14), rgba(255,255,255,0.03));
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
   .mono { font-variant-numeric: tabular-nums; }
 
   /* ------- home ------- */
@@ -101,8 +119,6 @@
   .card .togo { font-size: 11px; color: var(--text-3); font-weight: 500; }
   #btn-archive.has-rest {
     color: var(--text-2);
-    border: 1px solid color-mix(in srgb, var(--choose) 40%, transparent);
-    box-shadow: 0 0 18px color-mix(in srgb, var(--choose) 25%, transparent);
   }
   #btn-archive.receive { animation: moonCatch 0.7s cubic-bezier(0.22,1,0.36,1); }
   @keyframes moonCatch {
@@ -441,8 +457,6 @@
     font-size: 12px; font-weight: 500; margin-top: 3px;
     color: color-mix(in srgb, var(--text-2) 78%, transparent);
   }
-  #btn-archive { position: relative; z-index: 46; }
-
   /* ------- debug panel ------- */
   #debug {
     width: 300px; color: #cfcfd6; font-size: 12px; flex: none;
