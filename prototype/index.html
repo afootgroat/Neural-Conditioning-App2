@@ -1090,6 +1090,8 @@ document.getElementById("phone").addEventListener("click", e => {
    ========================================================================= */
 function showScreen(name) {
   state.screen = name;
+  // Any screen change dismisses the archive sheet (it's a modal over Home).
+  document.getElementById("archive").classList.remove("visible");
   document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
   document.getElementById(name).classList.add("active");
   if (name === "home") renderHome();
