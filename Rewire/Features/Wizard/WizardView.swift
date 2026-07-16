@@ -166,11 +166,11 @@ struct WizardView: View {
 
     private func commit() {
         var final = draft
-        final.name = final.name.trimmed
-        final.stimulus = final.stimulus.trimmed
-        final.oldFeelings = final.oldFeelings.trimmed
-        final.oldThoughts = final.oldThoughts.trimmed
-        final.oldBehavior = final.oldBehavior.trimmed
+        final.name = String(final.name.trimmed.prefix(Metrics.nameMaxLength))
+        final.stimulus = String(final.stimulus.trimmed.prefix(Metrics.stimulusMaxLength))
+        final.oldFeelings = String(final.oldFeelings.trimmed.prefix(Metrics.reactionMaxLength))
+        final.oldThoughts = String(final.oldThoughts.trimmed.prefix(Metrics.reactionMaxLength))
+        final.oldBehavior = String(final.oldBehavior.trimmed.prefix(Metrics.reactionMaxLength))
         final.mantra = final.mantra.trimmed
         if isEditing {
             store.update(final)

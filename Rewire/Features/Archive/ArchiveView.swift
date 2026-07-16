@@ -82,9 +82,9 @@ struct ArchiveView: View {
                         .foregroundStyle(Ink.textSecondary)
                         .lineLimit(1)
                     Text("\(pathway.maturity.title) · \(pathway.lifetimeReps) reps")
-                        .font(.system(size: 12, design: .rounded))
+                        .font(.system(size: 12, weight: .medium, design: .rounded))
                         .monospacedDigit()
-                        .foregroundStyle(Ink.textTertiary)
+                        .foregroundStyle(Ink.textSecondary.opacity(0.78))
                 }
 
                 Spacer()

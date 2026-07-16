@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Rewire — Blueprint A · Continuity</title>
+<style>
+  :root {
+    --ink: #07070C;
+    --ink-raised: rgba(16,16,24,0.72);
+    --text-1: #F4F2EC;
+    --text-2: #8E8E9E;
+    --text-3: #55555F;
+    --hairline: rgba(255,255,255,0.08);
+    --trigger: #FF5C39;
+    --notice: #FFC24B;
+    --accept: #3EDDC5;
+    --choose: #8B7BFF;
+    --calm: #3EDDC5;
+    --ui: "SF Pro Text", -apple-system, "Segoe UI", system-ui, sans-serif;
+    --voice: "New York", "Iowan Old Style", Georgia, serif;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-font-smoothing: antialiased; }
+  html, body {
+    min-height: 100%; background: #121218; font-family: var(--ui); color: var(--text-1);
+  }
+  .stage {
+    min-height: 100vh; display: flex; flex-direction: column; align-items: center;
+    justify-content: center; gap: 28px; padding: 40px 24px;
+  }
+  .meta {
+    text-align: center; max-width: 420px;
+  }
+  .meta .tag {
+    font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--accept); font-weight: 600; margin-bottom: 8px;
+  }
+  .meta h1 { font-family: var(--voice); font-size: 22px; font-weight: 500; margin-bottom: 6px; }
+  .meta p { font-size: 13px; color: var(--text-2); line-height: 1.5; }
+
+  .phone {
+    position: relative; width: 390px; height: 844px; background: var(--ink);
+    border-radius: 54px; overflow: hidden; flex: none;
+    box-shadow: 0 0 0 10px #000, 0 0 0 12px #2a2a30, 0 40px 100px rgba(0,0,0,0.55);
+  }
+  .island {
+    position: absolute; top: 12px; left: 50%; transform: translateX(-50%);
+    width: 118px; height: 34px; background: #000; border-radius: 20px; z-index: 60;
+  }
+  .aurora {
+    position: absolute; inset: 0; z-index: 0; pointer-events: none;
+    background:
+      radial-gradient(ellipse 90% 55% at 18% 8%, rgba(62,221,197,0.16), transparent 55%),
+      radial-gradient(ellipse 70% 45% at 88% 28%, rgba(139,123,255,0.10), transparent 50%),
+      radial-gradient(ellipse 80% 50% at 50% 100%, rgba(255,92,57,0.05), transparent 55%),
+      var(--ink);
+    animation: auroraDrift 18s ease-in-out infinite alternate;
+  }
+  @keyframes auroraDrift {
+    from { filter: hue-rotate(0deg); transform: scale(1); }
+    to { filter: hue-rotate(8deg); transform: scale(1.03); }
+  }
+
+  .ui {
+    position: absolute; inset: 0; z-index: 10;
+    padding: 62px 24px 0; display: flex; flex-direction: column;
+  }
+  .chrome { display: flex; align-items: center; justify-content: space-between; padding-bottom: 18px; }
+  .icon-btn {
+    width: 44px; height: 44px; border-radius: 50%; background: rgba(255,255,255,0.06);
+    border: none; color: var(--text-2); font-size: 20px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .dots { display: flex; gap: 8px; }
+  .dots span { width: 6px; height: 6px; border-radius: 3px; background: rgba(255,255,255,0.15); }
+  .dots span.on { width: 20px; background: var(--calm); }
+  .spacer { width: 44px; }
+
+  .scroll {
+    flex: 1; overflow-y: auto; scrollbar-width: none;
+    padding-bottom: 8px;
+    animation: rise 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  .scroll::-webkit-scrollbar { display: none; }
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: none; }
+  }
+
+  .wq { font-family: var(--voice); font-size: 28px; font-weight: 500; line-height: 1.2; }
+  .ww { font-size: 13px; color: var(--text-2); margin-top: 10px; line-height: 1.5; }
+
+  .glass {
+    margin-top: 26px;
+    background: linear-gradient(rgba(255,255,255,0.035), transparent), var(--ink-raised);
+    backdrop-filter: blur(28px); -webkit-backdrop-filter: blur(28px);
+    border-radius: 28px; border: 1px solid rgba(255,255,255,0.10);
+    padding: 24px 22px 20px;
+    position: relative;
+  }
+  .glass::before {
+    content: ""; position: absolute; inset: 0; border-radius: 28px; padding: 1px;
+    background: linear-gradient(rgba(255,255,255,0.16), rgba(255,255,255,0.02));
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor; mask-composite: exclude; pointer-events: none;
+  }
+
+  .row { display: flex; gap: 16px; }
+  .rail { width: 8px; display: flex; flex-direction: column; align-items: center; }
+  .dot {
+    width: 7px; height: 7px; border-radius: 50%; margin-top: 6px; flex: none;
+    box-shadow: 0 0 8px currentColor;
+  }
+  .line { width: 1px; flex: 1; background: var(--hairline); margin: 6px 0 2px; min-height: 20px; }
+  .body { flex: 1; padding-bottom: 26px; min-width: 0; }
+  .row:last-child .body { padding-bottom: 0; }
+  .row:last-child .line { display: none; }
+
+  .label {
+    font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
+    font-weight: 600; margin-bottom: 7px;
+  }
+  .phrase { font-family: var(--voice); font-size: 18px; line-height: 1.4; color: var(--text-1); }
+
+  .sub { margin-top: 12px; }
+  .sub + .sub { margin-top: 14px; }
+  .sub .micro {
+    font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase;
+    font-weight: 600; color: var(--text-3); margin-bottom: 5px;
+  }
+  .sub .phrase { font-size: 17px; }
+
+  .privacy {
+    display: flex; gap: 8px; justify-content: center; align-items: center;
+    font-size: 12px; color: var(--text-3); margin-top: 18px;
+  }
+
+  /* Record — archival, not practice */
+  .record {
+    margin-top: 14px;
+    border-radius: 22px;
+    padding: 16px 18px 14px;
+    background: rgba(255,255,255,0.025);
+    border: 1px solid rgba(255,255,255,0.06);
+    animation: rise 0.85s cubic-bezier(0.22, 1, 0.36, 1) 0.12s both;
+  }
+  .record-head {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .record-head .title {
+    font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
+    font-weight: 600; color: var(--text-3);
+  }
+  .record-head .badge {
+    font-size: 10px; color: var(--text-3); opacity: 0.85;
+  }
+  .record-line {
+    display: grid; grid-template-columns: 64px 1fr; gap: 8px;
+    padding: 8px 0; border-top: 1px solid var(--hairline);
+  }
+  .record-line:first-of-type { border-top: none; padding-top: 0; }
+  .record-line .k {
+    font-size: 11px; color: var(--text-3); padding-top: 2px;
+  }
+  .record-line .v {
+    font-family: var(--voice); font-size: 15px; color: var(--text-2); line-height: 1.35;
+  }
+
+  .footer { padding: 12px 0 36px; flex: none; }
+  .glow-btn {
+    width: 100%; height: 54px; border-radius: 27px; border: none;
+    font-family: var(--ui); font-size: 16px; font-weight: 600; color: var(--ink);
+    background: var(--calm);
+    box-shadow: 0 8px 28px rgba(62,221,197,0.28);
+    cursor: pointer;
+    transition: transform 0.18s cubic-bezier(0.3,1.4,0.6,1);
+  }
+  .glow-btn:active { transform: scale(0.97); }
+
+  .nav { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+  .nav a {
+    color: var(--text-2); text-decoration: none; font-size: 12px;
+    padding: 8px 14px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.1);
+  }
+  .nav a:hover { color: var(--text-1); border-color: rgba(255,255,255,0.22); }
+  .nav a.here { color: var(--accept); border-color: rgba(62,221,197,0.35); }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="meta">
+    <div class="tag">Mockup A · Continuity</div>
+    <h1>Practice path, quiet record</h1>
+    <p>The rail stays familiar. Notice and Accept are each one clear line. The old pattern sits below — archival, never in the practice thread.</p>
+  </div>
+
+  <div class="phone">
+    <div class="aurora"></div>
+    <div class="island"></div>
+    <div class="ui">
+      <div class="chrome">
+        <button class="icon-btn" type="button" aria-label="Back">‹</button>
+        <div class="dots"><span></span><span></span><span></span><span></span><span class="on"></span></div>
+        <div class="spacer"></div>
+      </div>
+
+      <div class="scroll">
+        <div class="wq">Your blueprint.</div>
+        <div class="ww">Read it once, slowly. This is the path you’ll practice.</div>
+
+        <div class="glass">
+          <div class="row">
+            <div class="rail"><div class="dot" style="background:var(--trigger);color:var(--trigger)"></div><div class="line"></div></div>
+            <div class="body">
+              <div class="label" style="color:var(--trigger)">When</div>
+              <div class="phrase">someone cuts me off in traffic</div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="rail"><div class="dot" style="background:var(--notice);color:var(--notice)"></div><div class="line"></div></div>
+            <div class="body">
+              <div class="label" style="color:var(--notice)">I notice</div>
+              <div class="phrase">thoughts and emotions arise<br>on their own<br><br>observe them without judgement</div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="rail"><div class="dot" style="background:var(--accept);color:var(--accept)"></div><div class="line"></div></div>
+            <div class="body">
+              <div class="label" style="color:var(--accept)">I accept</div>
+              <div class="phrase">passing thoughts and<br>physical sensations<br><br>study them with interest</div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="rail"><div class="dot" style="background:var(--choose);color:var(--choose)"></div><div class="line"></div></div>
+            <div class="body">
+              <div class="label" style="color:var(--choose)">I choose calm</div>
+              <div class="phrase">“This moment is not an emergency.”</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="record">
+          <div class="record-head">
+            <div class="title">Your record</div>
+            <div class="badge">Not practiced · kept privately</div>
+          </div>
+          <div class="record-line"><div class="k">feeling</div><div class="v">A hot flash of anger</div></div>
+          <div class="record-line"><div class="k">thinking</div><div class="v">They did that on purpose</div></div>
+          <div class="record-line"><div class="k">doing</div><div class="v">Tailgate, mutter, grip the wheel</div></div>
+        </div>
+
+        <div class="privacy">
+          <span aria-hidden="true">🔒</span>
+          Stays on this device. No account, no cloud.
+        </div>
+      </div>
+
+      <div class="footer">
+        <button class="glow-btn" type="button">Begin training</button>
+      </div>
+    </div>
+  </div>
+
+  <nav class="nav">
+    <a class="here" href="blueprint-v2-a.html">A · Continuity</a>
+    <a href="blueprint-v2-b.html">B · Two surfaces</a>
+    <a href="blueprint-v2-c.html">C · Cue parity</a>
+    <a href="blueprint-v2.html">All three</a>
+  </nav>
+</div>
+</body>
+</html>

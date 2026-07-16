@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Rewire — Blueprint v2 mockups</title>
+<style>
+  :root {
+    --ink: #07070C;
+    --text-1: #F4F2EC;
+    --text-2: #8E8E9E;
+    --text-3: #55555F;
+    --accept: #3EDDC5;
+    --notice: #FFC24B;
+    --choose: #8B7BFF;
+    --ui: "SF Pro Text", -apple-system, "Segoe UI", system-ui, sans-serif;
+    --voice: "New York", "Iowan Old Style", Georgia, serif;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-font-smoothing: antialiased; }
+  body {
+    min-height: 100vh; background: #121218; color: var(--text-1); font-family: var(--ui);
+    padding: 56px 28px 80px;
+  }
+  .wrap { max-width: 920px; margin: 0 auto; }
+  .eyebrow {
+    font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase;
+    color: var(--text-3); font-weight: 600; margin-bottom: 12px;
+  }
+  h1 { font-family: var(--voice); font-size: 34px; font-weight: 500; margin-bottom: 12px; }
+  .lede { font-size: 15px; color: var(--text-2); line-height: 1.55; max-width: 560px; margin-bottom: 40px; }
+
+  .grid { display: grid; gap: 16px; }
+  @media (min-width: 720px) { .grid { grid-template-columns: 1fr 1fr 1fr; } }
+
+  a.card {
+    display: block; text-decoration: none; color: inherit;
+    border-radius: 22px; padding: 22px 20px 20px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.08);
+    transition: border-color 0.2s ease, background 0.2s ease, transform 0.2s ease;
+  }
+  a.card:hover {
+    background: rgba(255,255,255,0.05);
+    border-color: rgba(255,255,255,0.16);
+    transform: translateY(-2px);
+  }
+  a.card .n {
+    font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase;
+    font-weight: 600; margin-bottom: 10px;
+  }
+  a.card h2 { font-family: var(--voice); font-size: 20px; font-weight: 500; margin-bottom: 8px; }
+  a.card p { font-size: 13px; color: var(--text-2); line-height: 1.45; }
+
+  .shared {
+    margin-top: 48px; padding-top: 28px; border-top: 1px solid rgba(255,255,255,0.08);
+  }
+  .shared h3 {
+    font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--text-3); font-weight: 600; margin-bottom: 16px;
+  }
+  .shared ul { list-style: none; display: grid; gap: 10px; }
+  .shared li {
+    font-size: 14px; color: var(--text-2); line-height: 1.45;
+    padding-left: 14px; border-left: 2px solid rgba(62,221,197,0.45);
+  }
+  .shared li strong { color: var(--text-1); font-weight: 500; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="eyebrow">Design audit · blueprint v2</div>
+  <h1>Three treatments</h1>
+  <p class="lede">Practice path is fixed. Old reaction is record-only. Training cues match the blueprint — never the journaled pattern.</p>
+
+  <div class="grid">
+    <a class="card" href="blueprint-v2-a.html">
+      <div class="n" style="color:var(--accept)">Mockup A</div>
+      <h2>Continuity</h2>
+      <p>Familiar rail. Notice and Accept as single clear lines. Record sits quietly under the card.</p>
+    </a>
+    <a class="card" href="blueprint-v2-b.html">
+      <div class="n" style="color:var(--notice)">Mockup B</div>
+      <h2>Two surfaces</h2>
+      <p>Blueprint is pure practice. Old reaction lives in a bottom sheet — one gesture away.</p>
+    </a>
+    <a class="card" href="blueprint-v2-c.html">
+      <div class="n" style="color:var(--choose)">Mockup C</div>
+      <h2>Cue parity</h2>
+      <p>Toggle Blueprint ↔ Training cue. Same words. Record only via explicit “View your record.”</p>
+    </a>
+  </div>
+
+  <div class="shared">
+    <h3>Shared copy across all three</h3>
+    <ul>
+      <li><strong>When</strong> — someone cuts me off in traffic</li>
+      <li><strong>I notice</strong> — thoughts and emotions arise on their own</li>
+      <li><strong>I accept · Emotions</strong> — Locate the physical sensation and study it with interest</li>
+      <li><strong>I accept · Thoughts</strong> — Notice thoughts appearing and observe them without judgement</li>
+      <li><strong>I choose calm</strong> — “This moment is not an emergency.”</li>
+      <li><strong>Record</strong> — feeling / thinking / doing kept privately, not practiced</li>
+    </ul>
+  </div>
+</div>
+</body>
+</html>

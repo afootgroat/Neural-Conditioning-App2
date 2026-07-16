@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Rewire — Blueprint B · Two surfaces</title>
+<style>
+  :root {
+    --ink: #07070C;
+    --ink-raised: rgba(16,16,24,0.78);
+    --text-1: #F4F2EC;
+    --text-2: #8E8E9E;
+    --text-3: #55555F;
+    --hairline: rgba(255,255,255,0.08);
+    --trigger: #FF5C39;
+    --notice: #FFC24B;
+    --accept: #3EDDC5;
+    --choose: #8B7BFF;
+    --calm: #3EDDC5;
+    --ui: "SF Pro Text", -apple-system, "Segoe UI", system-ui, sans-serif;
+    --voice: "New York", "Iowan Old Style", Georgia, serif;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-font-smoothing: antialiased; }
+  html, body { min-height: 100%; background: #121218; font-family: var(--ui); color: var(--text-1); }
+  .stage {
+    min-height: 100vh; display: flex; flex-direction: column; align-items: center;
+    justify-content: center; gap: 28px; padding: 40px 24px;
+  }
+  .meta { text-align: center; max-width: 440px; }
+  .meta .tag {
+    font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--notice); font-weight: 600; margin-bottom: 8px;
+  }
+  .meta h1 { font-family: var(--voice); font-size: 22px; font-weight: 500; margin-bottom: 6px; }
+  .meta p { font-size: 13px; color: var(--text-2); line-height: 1.5; }
+
+  .phone {
+    position: relative; width: 390px; height: 844px; background: var(--ink);
+    border-radius: 54px; overflow: hidden; flex: none;
+    box-shadow: 0 0 0 10px #000, 0 0 0 12px #2a2a30, 0 40px 100px rgba(0,0,0,0.55);
+  }
+  .island {
+    position: absolute; top: 12px; left: 50%; transform: translateX(-50%);
+    width: 118px; height: 34px; background: #000; border-radius: 20px; z-index: 60;
+  }
+  .aurora {
+    position: absolute; inset: 0; z-index: 0; pointer-events: none;
+    background:
+      radial-gradient(ellipse 85% 50% at 70% 12%, rgba(255,194,75,0.12), transparent 55%),
+      radial-gradient(ellipse 70% 45% at 20% 40%, rgba(62,221,197,0.10), transparent 50%),
+      var(--ink);
+  }
+
+  .ui {
+    position: absolute; inset: 0; z-index: 10;
+    padding: 62px 24px 0; display: flex; flex-direction: column;
+  }
+  .chrome { display: flex; align-items: center; justify-content: space-between; padding-bottom: 18px; }
+  .icon-btn {
+    width: 44px; height: 44px; border-radius: 50%; background: rgba(255,255,255,0.06);
+    border: none; color: var(--text-2); font-size: 20px;
+    display: flex; align-items: center; justify-content: center; cursor: pointer;
+  }
+  .dots { display: flex; gap: 8px; }
+  .dots span { width: 6px; height: 6px; border-radius: 3px; background: rgba(255,255,255,0.15); }
+  .dots span.on { width: 20px; background: var(--calm); }
+  .spacer { width: 44px; }
+
+  .scroll {
+    flex: 1; overflow-y: auto; scrollbar-width: none; padding-bottom: 120px;
+    animation: rise 0.65s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  .scroll::-webkit-scrollbar { display: none; }
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(14px); }
+    to { opacity: 1; transform: none; }
+  }
+
+  .wq { font-family: var(--voice); font-size: 28px; font-weight: 500; line-height: 1.2; }
+  .ww { font-size: 13px; color: var(--text-2); margin-top: 10px; line-height: 1.5; }
+
+  .glass {
+    margin-top: 26px;
+    background: linear-gradient(rgba(255,255,255,0.04), transparent), var(--ink-raised);
+    backdrop-filter: blur(28px); -webkit-backdrop-filter: blur(28px);
+    border-radius: 28px; border: 1px solid rgba(255,255,255,0.10);
+    padding: 24px 22px 22px;
+  }
+
+  .row { display: flex; gap: 16px; }
+  .rail { width: 8px; display: flex; flex-direction: column; align-items: center; }
+  .dot {
+    width: 7px; height: 7px; border-radius: 50%; margin-top: 6px; flex: none;
+    box-shadow: 0 0 8px currentColor;
+  }
+  .line { width: 1px; flex: 1; background: var(--hairline); margin: 6px 0 2px; min-height: 18px; }
+  .body { flex: 1; padding-bottom: 24px; min-width: 0; }
+  .row:last-child .body { padding-bottom: 0; }
+  .row:last-child .line { display: none; }
+  .label {
+    font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
+    font-weight: 600; margin-bottom: 7px;
+  }
+  .phrase { font-family: var(--voice); font-size: 18px; line-height: 1.4; }
+
+  /* Accept as two inset surfaces */
+  .accept-stack { display: flex; flex-direction: column; gap: 10px; margin-top: 4px; }
+  .accept-tile {
+    border-radius: 16px;
+    padding: 14px 14px 13px;
+    background: rgba(62,221,197,0.06);
+    border: 1px solid rgba(62,221,197,0.14);
+  }
+  .accept-tile .micro {
+    font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase;
+    font-weight: 600; color: rgba(62,221,197,0.85); margin-bottom: 6px;
+  }
+  .accept-tile .phrase { font-size: 16px; line-height: 1.4; }
+
+  .privacy {
+    display: flex; gap: 8px; justify-content: center; align-items: center;
+    font-size: 12px; color: var(--text-3); margin-top: 20px;
+  }
+
+  .footer {
+    position: absolute; left: 24px; right: 24px; bottom: 28px; z-index: 30;
+  }
+  .glow-btn {
+    width: 100%; height: 54px; border-radius: 27px; border: none;
+    font-size: 16px; font-weight: 600; color: var(--ink); background: var(--calm);
+    box-shadow: 0 8px 28px rgba(62,221,197,0.28); cursor: pointer;
+  }
+
+  /* Peek sheet — old reaction lives here */
+  .peek {
+    position: absolute; left: 0; right: 0; bottom: 0; z-index: 40;
+    border-radius: 28px 28px 0 0;
+    background: rgba(18,18,26,0.92);
+    backdrop-filter: blur(36px); -webkit-backdrop-filter: blur(36px);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-bottom: none;
+    padding: 12px 24px 28px;
+    transform: translateY(calc(100% - 72px));
+    transition: transform 0.55s cubic-bezier(0.22, 1.05, 0.36, 1);
+    box-shadow: 0 -20px 60px rgba(0,0,0,0.45);
+  }
+  .peek.open { transform: translateY(0); }
+  .peek .handle {
+    width: 36px; height: 4px; border-radius: 2px;
+    background: rgba(255,255,255,0.18); margin: 0 auto 16px;
+  }
+  .peek-hit {
+    display: flex; align-items: center; justify-content: space-between;
+    cursor: pointer; user-select: none; padding-bottom: 4px;
+  }
+  .peek-hit .left { display: flex; flex-direction: column; gap: 3px; }
+  .peek-hit .eyebrow {
+    font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
+    font-weight: 600; color: var(--text-3);
+  }
+  .peek-hit .hint { font-size: 13px; color: var(--text-2); }
+  .peek-hit .chev {
+    width: 28px; height: 28px; border-radius: 50%;
+    background: rgba(255,255,255,0.06); color: var(--text-2);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .peek.open .chev { transform: rotate(180deg); }
+
+  .peek-body {
+    max-height: 0; overflow: hidden; opacity: 0;
+    transition: max-height 0.5s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.35s ease, margin 0.35s ease;
+    margin-top: 0;
+  }
+  .peek.open .peek-body {
+    max-height: 280px; opacity: 1; margin-top: 18px;
+  }
+  .peek-note {
+    font-size: 12px; color: var(--text-3); line-height: 1.45; margin-bottom: 14px;
+  }
+  .record-line {
+    display: grid; grid-template-columns: 70px 1fr; gap: 10px;
+    padding: 11px 0; border-top: 1px solid var(--hairline);
+  }
+  .record-line .k { font-size: 11px; color: var(--text-3); padding-top: 2px; }
+  .record-line .v { font-family: var(--voice); font-size: 16px; color: var(--text-2); line-height: 1.35; }
+
+  .scrim {
+    position: absolute; inset: 0; z-index: 35; display: none;
+    background: rgba(7,7,12,0.35);
+  }
+  .scrim.on { display: block; animation: fade 0.3s ease both; }
+  @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+
+  .nav { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+  .nav a {
+    color: var(--text-2); text-decoration: none; font-size: 12px;
+    padding: 8px 14px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.1);
+  }
+  .nav a:hover { color: var(--text-1); border-color: rgba(255,255,255,0.22); }
+  .nav a.here { color: var(--notice); border-color: rgba(255,194,75,0.35); }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="meta">
+    <div class="tag">Mockup B · Two surfaces</div>
+    <h1>Practice above · record beneath</h1>
+    <p>The blueprint is only what you rehearse. The old reaction lives in a bottom sheet — one tap away, never on the path.</p>
+  </div>
+
+  <div class="phone" id="phone">
+    <div class="aurora"></div>
+    <div class="island"></div>
+    <div class="ui">
+      <div class="chrome">
+        <button class="icon-btn" type="button">‹</button>
+        <div class="dots"><span></span><span></span><span></span><span></span><span class="on"></span></div>
+        <div class="spacer"></div>
+      </div>
+
+      <div class="scroll">
+        <div class="wq">Your blueprint.</div>
+        <div class="ww">Read it once, slowly. This is the path you’ll practice.</div>
+
+        <div class="glass">
+          <div class="row">
+            <div class="rail"><div class="dot" style="background:var(--trigger);color:var(--trigger)"></div><div class="line"></div></div>
+            <div class="body">
+              <div class="label" style="color:var(--trigger)">When</div>
+              <div class="phrase">someone cuts me off in traffic</div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="rail"><div class="dot" style="background:var(--notice);color:var(--notice)"></div><div class="line"></div></div>
+            <div class="body">
+              <div class="label" style="color:var(--notice)">I notice</div>
+              <div class="phrase">thoughts and emotions arise on their own</div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="rail"><div class="dot" style="background:var(--accept);color:var(--accept)"></div><div class="line"></div></div>
+            <div class="body">
+              <div class="label" style="color:var(--accept)">I accept</div>
+              <div class="accept-stack">
+                <div class="accept-tile">
+                  <div class="micro">Emotions</div>
+                  <div class="phrase">Locate the physical sensation and study it with interest</div>
+                </div>
+                <div class="accept-tile">
+                  <div class="micro">Thoughts</div>
+                  <div class="phrase">Notice thoughts appearing and observe them without judgement</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="rail"><div class="dot" style="background:var(--choose);color:var(--choose)"></div><div class="line"></div></div>
+            <div class="body">
+              <div class="label" style="color:var(--choose)">I choose calm</div>
+              <div class="phrase">“This moment is not an emergency.”</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="privacy"><span>🔒</span> Stays on this device. No account, no cloud.</div>
+      </div>
+
+      <div class="footer">
+        <button class="glow-btn" type="button">Begin training</button>
+      </div>
+    </div>
+
+    <div class="scrim" id="scrim"></div>
+    <div class="peek" id="peek">
+      <div class="handle"></div>
+      <div class="peek-hit" id="peek-hit" role="button" tabindex="0" aria-expanded="false">
+        <div class="left">
+          <div class="eyebrow">Your record</div>
+          <div class="hint">What used to happen — not practiced</div>
+        </div>
+        <div class="chev">⌃</div>
+      </div>
+      <div class="peek-body">
+        <p class="peek-note">Captured so you can recognize the old pattern. It never appears in training cues.</p>
+        <div class="record-line"><div class="k">feeling</div><div class="v">A hot flash of anger</div></div>
+        <div class="record-line"><div class="k">thinking</div><div class="v">They did that on purpose</div></div>
+        <div class="record-line"><div class="k">doing</div><div class="v">Tailgate, mutter, grip the wheel</div></div>
+      </div>
+    </div>
+  </div>
+
+  <nav class="nav">
+    <a href="blueprint-v2-a.html">A · Continuity</a>
+    <a class="here" href="blueprint-v2-b.html">B · Two surfaces</a>
+    <a href="blueprint-v2-c.html">C · Cue parity</a>
+    <a href="blueprint-v2.html">All three</a>
+  </nav>
+</div>
+<script>
+  const peek = document.getElementById("peek");
+  const hit = document.getElementById("peek-hit");
+  const scrim = document.getElementById("scrim");
+  const toggle = () => {
+    const open = peek.classList.toggle("open");
+    scrim.classList.toggle("on", open);
+    hit.setAttribute("aria-expanded", open ? "true" : "false");
+  };
+  hit.addEventListener("click", toggle);
+  hit.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggle(); } });
+  scrim.addEventListener("click", () => {
+    peek.classList.remove("open");
+    scrim.classList.remove("on");
+    hit.setAttribute("aria-expanded", "false");
+  });
+</script>
+</body>
+</html>

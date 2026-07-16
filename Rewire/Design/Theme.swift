@@ -73,4 +73,10 @@ enum Metrics {
     static let cardRadius: CGFloat = 28
     static let screenMargin: CGFloat = 24
     static let orbDiameter: CGFloat = 288
+    /// Pathway names stay short — a label you can say in one breath.
+    static let nameMaxLength: Int = 35
+    /// Trigger cues stay brief so they remain summonable in training.
+    static let stimulusMaxLength: Int = 35
+    /// Feel / think / do lines on the old-reaction step — a sketch, not a story.
+    static let reactionMaxLength: Int = 35
 }

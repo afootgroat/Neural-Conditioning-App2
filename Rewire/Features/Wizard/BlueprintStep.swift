@@ -21,26 +21,39 @@ struct BlueprintStep: View {
                 GlassCard(tint: draft.hue.color) {
                     VStack(alignment: .leading, spacing: 0) {
                         blueprintRow(
-                            index: 0, label: "When", accent: RepStage.trigger.color,
-                            content: Text(draft.stimulus).font(.voice(18))
+                            label: "When", accent: RepStage.trigger.color,
+                            content: whisperPhrase(draft.stimulus, size: 16, brighter: true)
                         )
                         blueprintRow(
-                            index: 1, label: "I notice", accent: RepStage.notice.color,
-                            content: noticeContent
+                            label: "I notice", accent: RepStage.notice.color,
+                            content: VStack(alignment: .leading, spacing: 0) {
+                                whisperPhrase(PracticeScript.noticeLine1)
+                                whisperPhrase(PracticeScript.noticeLine2)
+                                Spacer().frame(height: 12)
+                                whisperPhrase(PracticeScript.noticeAction)
+                            }
                         )
                         blueprintRow(
-                            index: 2, label: "I accept", accent: RepStage.accept.color,
-                            content: Text("that it's here — without a fight.")
-                                .font(.voice(18))
+                            label: "I accept", accent: RepStage.accept.color,
+                            content: VStack(alignment: .leading, spacing: 0) {
+                                whisperPhrase(PracticeScript.acceptLine1)
+                                whisperPhrase(PracticeScript.acceptLine2)
+                                Spacer().frame(height: 12)
+                                whisperPhrase(PracticeScript.acceptAction)
+                            }
                         )
                         blueprintRow(
-                            index: 3, label: "I choose \(draft.emotionName.lowercased())",
+                            label: "I choose \(draft.emotionName.lowercased())",
                             accent: RepStage.choose.color,
-                            content: Text("“\(draft.mantra)”").font(.voice(18)),
+                            content: whisperPhrase(draft.mantra, brighter: true),
                             isLast: true
                         )
                     }
                     .padding(24)
+                }
+
+                if hasRecord {
+                    recordCard
                 }
 
                 HStack(spacing: 8) {
@@ -63,29 +76,72 @@ struct BlueprintStep: View {
         }
     }
 
-    private var noticeContent: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            noticeLine("feeling", draft.oldFeelings)
-            noticeLine("thinking", draft.oldThoughts)
-            noticeLine("doing", draft.oldBehavior)
+    /// Quiet italic body — Continuity A · Whisper italic.
+    private func whisperPhrase(_ text: String, size: CGFloat = 15,
+                               brighter: Bool = false) -> some View {
+        Text(text)
+            .font(.voice(size))
+            .italic()
+            .foregroundStyle(brighter
+                             ? Ink.textPrimary.opacity(0.72)
+                             : Ink.textSecondary)
+            .fixedSize(horizontal: false, vertical: true)
+    }
+
+    private var hasRecord: Bool {
+        !draft.oldFeelings.trimmed.isEmpty
+            || !draft.oldThoughts.trimmed.isEmpty
+            || !draft.oldBehavior.trimmed.isEmpty
+    }
+
+    private var recordCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                TrackedLabel(text: "Your record", size: 10, color: Ink.textTertiary)
+                Spacer()
+                Text("Not practiced · kept privately")
+                    .font(.system(size: 10, design: .rounded))
+                    .foregroundStyle(Ink.textTertiary)
+            }
+            recordLine("feeling", draft.oldFeelings)
+            recordLine("thinking", draft.oldThoughts)
+            recordLine("doing", draft.oldBehavior)
+        }
+        .padding(.horizontal, 18)
+        .padding(.vertical, 16)
+        .background {
+            RoundedRectangle(cornerRadius: 22, style: .continuous)
+                .fill(Color.white.opacity(0.025))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 22, style: .continuous)
+                        .stroke(Color.white.opacity(0.06), lineWidth: 1)
+                )
         }
     }
 
     @ViewBuilder
-    private func noticeLine(_ verb: String, _ text: String) -> some View {
+    private func recordLine(_ verb: String, _ text: String) -> some View {
         if !text.trimmed.isEmpty {
-            (Text("\(verb) ").font(.voice(15)).foregroundStyle(Ink.textTertiary)
-             + Text(text).font(.voice(18)).foregroundStyle(Ink.textPrimary))
-                .fixedSize(horizontal: false, vertical: true)
+            HStack(alignment: .top, spacing: 8) {
+                Text(verb)
+                    .font(.system(size: 11, design: .rounded))
+                    .foregroundStyle(Ink.textTertiary)
+                    .frame(width: 64, alignment: .leading)
+                Text(text)
+                    .font(.voice(14))
+                    .italic()
+                    .foregroundStyle(Ink.textTertiary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .padding(.top, 4)
         }
     }
 
     private func blueprintRow(
-        index: Int, label: String, accent: Color,
+        label: String, accent: Color,
         content: some View, isLast: Bool = false
     ) -> some View {
         HStack(alignment: .top, spacing: 16) {
-            // The thread: a dot per stage, joined by a hairline.
             VStack(spacing: 0) {
                 Circle()
                     .fill(accent)
@@ -102,11 +158,9 @@ struct BlueprintStep: View {
             }
             .frame(width: 8)
 
-            VStack(alignment: .leading, spacing: 6) {
+            VStack(alignment: .leading, spacing: 8) {
                 TrackedLabel(text: label, size: 10, color: accent.opacity(0.95))
                 content
-                    .foregroundStyle(Ink.textPrimary)
-                    .fixedSize(horizontal: false, vertical: true)
             }
             .padding(.bottom, isLast ? 0 : 24)
 

@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Rewire — Blueprint C · Cue parity</title>
+<style>
+  :root {
+    --ink: #07070C;
+    --ink-raised: rgba(16,16,24,0.78);
+    --text-1: #F4F2EC;
+    --text-2: #8E8E9E;
+    --text-3: #55555F;
+    --hairline: rgba(255,255,255,0.08);
+    --trigger: #FF5C39;
+    --notice: #FFC24B;
+    --accept: #3EDDC5;
+    --choose: #8B7BFF;
+    --calm: #3EDDC5;
+    --ui: "SF Pro Text", -apple-system, "Segoe UI", system-ui, sans-serif;
+    --voice: "New York", "Iowan Old Style", Georgia, serif;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-font-smoothing: antialiased; }
+  html, body { min-height: 100%; background: #121218; font-family: var(--ui); color: var(--text-1); }
+  .stage {
+    min-height: 100vh; display: flex; flex-direction: column; align-items: center;
+    justify-content: center; gap: 28px; padding: 40px 24px;
+  }
+  .meta { text-align: center; max-width: 460px; }
+  .meta .tag {
+    font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--choose); font-weight: 600; margin-bottom: 8px;
+  }
+  .meta h1 { font-family: var(--voice); font-size: 22px; font-weight: 500; margin-bottom: 6px; }
+  .meta p { font-size: 13px; color: var(--text-2); line-height: 1.5; }
+
+  .phone {
+    position: relative; width: 390px; height: 844px; background: var(--ink);
+    border-radius: 54px; overflow: hidden; flex: none;
+    box-shadow: 0 0 0 10px #000, 0 0 0 12px #2a2a30, 0 40px 100px rgba(0,0,0,0.55);
+  }
+  .island {
+    position: absolute; top: 12px; left: 50%; transform: translateX(-50%);
+    width: 118px; height: 34px; background: #000; border-radius: 20px; z-index: 60;
+  }
+  .aurora {
+    position: absolute; inset: 0; z-index: 0; pointer-events: none;
+    background:
+      radial-gradient(ellipse 80% 50% at 50% 30%, rgba(139,123,255,0.14), transparent 55%),
+      radial-gradient(ellipse 70% 40% at 20% 80%, rgba(62,221,197,0.10), transparent 50%),
+      var(--ink);
+  }
+
+  .ui {
+    position: absolute; inset: 0; z-index: 10;
+    padding: 62px 24px 0; display: flex; flex-direction: column;
+  }
+  .chrome { display: flex; align-items: center; justify-content: space-between; padding-bottom: 14px; }
+  .icon-btn {
+    width: 44px; height: 44px; border-radius: 50%; background: rgba(255,255,255,0.06);
+    border: none; color: var(--text-2); font-size: 20px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .dots { display: flex; gap: 8px; }
+  .dots span { width: 6px; height: 6px; border-radius: 3px; background: rgba(255,255,255,0.15); }
+  .dots span.on { width: 20px; background: var(--calm); }
+  .spacer { width: 44px; }
+
+  /* Segmented control — Blueprint | Training cue */
+  .seg {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 4px;
+    padding: 4px; border-radius: 14px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--hairline);
+    margin-bottom: 18px;
+  }
+  .seg button {
+    height: 34px; border: none; border-radius: 11px; cursor: pointer;
+    font-size: 12px; font-weight: 600; font-family: var(--ui);
+    color: var(--text-2); background: transparent;
+    transition: all 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .seg button.on {
+    color: var(--text-1); background: rgba(255,255,255,0.1);
+    box-shadow: 0 1px 0 rgba(255,255,255,0.06);
+  }
+
+  .panel { flex: 1; min-height: 0; position: relative; }
+  .view {
+    position: absolute; inset: 0; display: flex; flex-direction: column;
+    opacity: 0; pointer-events: none; transform: translateY(8px);
+    transition: opacity 0.35s ease, transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .view.on { opacity: 1; pointer-events: auto; transform: none; }
+
+  .scroll { flex: 1; overflow-y: auto; scrollbar-width: none; padding-bottom: 8px; }
+  .scroll::-webkit-scrollbar { display: none; }
+
+  .wq { font-family: var(--voice); font-size: 26px; font-weight: 500; line-height: 1.2; }
+  .ww { font-size: 13px; color: var(--text-2); margin-top: 8px; line-height: 1.5; }
+
+  .glass {
+    margin-top: 22px;
+    background: linear-gradient(rgba(255,255,255,0.04), transparent), var(--ink-raised);
+    backdrop-filter: blur(28px); -webkit-backdrop-filter: blur(28px);
+    border-radius: 28px; border: 1px solid rgba(255,255,255,0.10);
+    padding: 22px 20px 18px;
+  }
+  .row { display: flex; gap: 14px; }
+  .rail { width: 8px; display: flex; flex-direction: column; align-items: center; }
+  .dot {
+    width: 7px; height: 7px; border-radius: 50%; margin-top: 6px; flex: none;
+    box-shadow: 0 0 8px currentColor;
+  }
+  .line { width: 1px; flex: 1; background: var(--hairline); margin: 6px 0 2px; min-height: 16px; }
+  .body { flex: 1; padding-bottom: 20px; min-width: 0; }
+  .row:last-child .body { padding-bottom: 0; }
+  .row:last-child .line { display: none; }
+  .label {
+    font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
+    font-weight: 600; margin-bottom: 6px;
+  }
+  .phrase { font-family: var(--voice); font-size: 17px; line-height: 1.4; }
+  .sub { margin-top: 10px; }
+  .sub + .sub { margin-top: 12px; }
+  .sub .micro {
+    font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase;
+    font-weight: 600; color: var(--text-3); margin-bottom: 4px;
+  }
+  .sub .phrase { font-size: 16px; }
+
+  .link-record {
+    margin-top: 16px; width: 100%;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 16px; border-radius: 18px;
+    background: rgba(255,255,255,0.03); border: 1px solid var(--hairline);
+    color: var(--text-2); font-size: 13px; cursor: pointer; font-family: var(--ui);
+    transition: background 0.2s ease;
+  }
+  .link-record:hover { background: rgba(255,255,255,0.05); }
+  .link-record span:last-child { color: var(--text-3); font-size: 12px; }
+
+  .footer { padding: 10px 0 36px; flex: none; }
+  .glow-btn {
+    width: 100%; height: 54px; border-radius: 27px; border: none;
+    font-size: 16px; font-weight: 600; color: var(--ink); background: var(--calm);
+    box-shadow: 0 8px 28px rgba(62,221,197,0.28); cursor: pointer;
+  }
+
+  /* Training cue surface */
+  .cue-stage {
+    flex: 1; display: flex; flex-direction: column; align-items: center;
+    justify-content: center; text-align: center; padding: 0 8px 24px;
+  }
+  .cue-stage .stage-name {
+    font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase;
+    font-weight: 700; margin-bottom: 28px;
+  }
+  .cue-copy { max-width: 300px; }
+  .cue-copy .lead {
+    font-family: var(--voice); font-size: 24px; line-height: 1.35; color: var(--text-1);
+  }
+  .cue-copy .pair { text-align: left; width: 100%; }
+  .cue-copy .pair .block { margin-bottom: 22px; }
+  .cue-copy .pair .block:last-child { margin-bottom: 0; }
+  .cue-copy .pair .micro {
+    font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
+    font-weight: 600; margin-bottom: 8px;
+  }
+  .cue-copy .pair .lead { font-size: 20px; }
+
+  .cue-switch {
+    display: flex; gap: 8px; margin-top: 36px;
+  }
+  .cue-switch button {
+    padding: 8px 14px; border-radius: 999px; border: 1px solid var(--hairline);
+    background: transparent; color: var(--text-3); font-size: 11px; font-weight: 600;
+    letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer; font-family: var(--ui);
+  }
+  .cue-switch button.on {
+    color: var(--text-1); border-color: rgba(255,255,255,0.2);
+    background: rgba(255,255,255,0.06);
+  }
+  .hold-hint {
+    margin-top: 28px; font-size: 12px; color: var(--text-3);
+    letter-spacing: 0.04em;
+  }
+
+  /* Record overlay */
+  .record-overlay {
+    position: absolute; inset: 0; z-index: 50; display: none;
+    background: rgba(7,7,12,0.55);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  }
+  .record-overlay.on { display: block; animation: fade 0.3s ease both; }
+  @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+  .record-card {
+    position: absolute; left: 20px; right: 20px; top: 50%;
+    transform: translateY(-50%);
+    border-radius: 24px; padding: 22px 20px 18px;
+    background: linear-gradient(rgba(255,255,255,0.04), transparent), var(--ink-raised);
+    border: 1px solid rgba(255,255,255,0.1);
+    animation: cardIn 0.45s cubic-bezier(0.22, 1.1, 0.36, 1) both;
+  }
+  @keyframes cardIn {
+    from { opacity: 0; transform: translateY(calc(-50% + 14px)) scale(0.97); }
+    to { opacity: 1; transform: translateY(-50%) scale(1); }
+  }
+  .record-card h3 {
+    font-family: var(--voice); font-size: 20px; font-weight: 500; margin-bottom: 6px;
+  }
+  .record-card .note {
+    font-size: 12px; color: var(--text-3); line-height: 1.45; margin-bottom: 16px;
+  }
+  .record-line {
+    display: grid; grid-template-columns: 70px 1fr; gap: 10px;
+    padding: 11px 0; border-top: 1px solid var(--hairline);
+  }
+  .record-line .k { font-size: 11px; color: var(--text-3); }
+  .record-line .v { font-family: var(--voice); font-size: 16px; color: var(--text-2); line-height: 1.35; }
+  .record-card .done {
+    margin-top: 18px; width: 100%; height: 44px; border-radius: 22px; border: none;
+    background: var(--choose); color: var(--ink); font-weight: 600; font-size: 14px;
+    cursor: pointer; font-family: var(--ui);
+  }
+
+  .nav { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+  .nav a {
+    color: var(--text-2); text-decoration: none; font-size: 12px;
+    padding: 8px 14px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.1);
+  }
+  .nav a:hover { color: var(--text-1); border-color: rgba(255,255,255,0.22); }
+  .nav a.here { color: var(--choose); border-color: rgba(139,123,255,0.4); }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="meta">
+    <div class="tag">Mockup C · Cue parity</div>
+    <h1>Blueprint = training cue</h1>
+    <p>Flip between the ritual card and the long-press cue. Same words. Old reaction only via “View record” — never in the rehearsal.</p>
+  </div>
+
+  <div class="phone">
+    <div class="aurora"></div>
+    <div class="island"></div>
+    <div class="ui">
+      <div class="chrome">
+        <button class="icon-btn" type="button">‹</button>
+        <div class="dots"><span></span><span></span><span></span><span></span><span class="on"></span></div>
+        <div class="spacer"></div>
+      </div>
+
+      <div class="seg" role="tablist">
+        <button type="button" class="on" data-view="blueprint" role="tab">Blueprint</button>
+        <button type="button" data-view="cue" role="tab">Training cue</button>
+      </div>
+
+      <div class="panel">
+        <!-- Blueprint -->
+        <div class="view on" id="view-blueprint">
+          <div class="scroll">
+            <div class="wq">Your blueprint.</div>
+            <div class="ww">What you read here is exactly what you’ll summon in training.</div>
+            <div class="glass">
+              <div class="row">
+                <div class="rail"><div class="dot" style="background:var(--trigger);color:var(--trigger)"></div><div class="line"></div></div>
+                <div class="body">
+                  <div class="label" style="color:var(--trigger)">When</div>
+                  <div class="phrase">someone cuts me off in traffic</div>
+                </div>
+              </div>
+              <div class="row">
+                <div class="rail"><div class="dot" style="background:var(--notice);color:var(--notice)"></div><div class="line"></div></div>
+                <div class="body">
+                  <div class="label" style="color:var(--notice)">I notice</div>
+                  <div class="phrase">thoughts and emotions arise on their own</div>
+                </div>
+              </div>
+              <div class="row">
+                <div class="rail"><div class="dot" style="background:var(--accept);color:var(--accept)"></div><div class="line"></div></div>
+                <div class="body">
+                  <div class="label" style="color:var(--accept)">I accept</div>
+                  <div class="sub">
+                    <div class="micro">Emotions</div>
+                    <div class="phrase">Locate the physical sensation and study it with interest</div>
+                  </div>
+                  <div class="sub">
+                    <div class="micro">Thoughts</div>
+                    <div class="phrase">Notice thoughts appearing and observe them without judgement</div>
+                  </div>
+                </div>
+              </div>
+              <div class="row">
+                <div class="rail"><div class="dot" style="background:var(--choose);color:var(--choose)"></div><div class="line"></div></div>
+                <div class="body">
+                  <div class="label" style="color:var(--choose)">I choose calm</div>
+                  <div class="phrase">“This moment is not an emergency.”</div>
+                </div>
+              </div>
+            </div>
+            <button class="link-record" type="button" id="open-record">
+              <span>View your record</span>
+              <span>feeling · thinking · doing</span>
+            </button>
+          </div>
+          <div class="footer">
+            <button class="glow-btn" type="button">Begin training</button>
+          </div>
+        </div>
+
+        <!-- Training cue -->
+        <div class="view" id="view-cue">
+          <div class="cue-stage">
+            <div class="stage-name" id="cue-stage-label" style="color:var(--notice)">Notice</div>
+            <div class="cue-copy" id="cue-body">
+              <div class="lead">thoughts and emotions arise on their own</div>
+            </div>
+            <div class="cue-switch">
+              <button type="button" class="on" data-cue="notice">Notice</button>
+              <button type="button" data-cue="accept">Accept</button>
+            </div>
+            <div class="hold-hint">Long-press the orb · same words as the blueprint</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="record-overlay" id="record">
+      <div class="record-card" role="dialog" aria-labelledby="rec-title">
+        <h3 id="rec-title">Your record</h3>
+        <p class="note">The old reaction — kept for recognition, never rehearsed.</p>
+        <div class="record-line"><div class="k">feeling</div><div class="v">A hot flash of anger</div></div>
+        <div class="record-line"><div class="k">thinking</div><div class="v">They did that on purpose</div></div>
+        <div class="record-line"><div class="k">doing</div><div class="v">Tailgate, mutter, grip the wheel</div></div>
+        <button class="done" type="button" id="close-record">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <nav class="nav">
+    <a href="blueprint-v2-a.html">A · Continuity</a>
+    <a href="blueprint-v2-b.html">B · Two surfaces</a>
+    <a class="here" href="blueprint-v2-c.html">C · Cue parity</a>
+    <a href="blueprint-v2.html">All three</a>
+  </nav>
+</div>
+<script>
+  const cues = {
+    notice: {
+      label: "Notice",
+      color: "var(--notice)",
+      html: `<div class="lead">thoughts and emotions arise on their own</div>`
+    },
+    accept: {
+      label: "Accept",
+      color: "var(--accept)",
+      html: `<div class="pair">
+        <div class="block"><div class="micro" style="color:var(--accept)">Emotions</div>
+        <div class="lead">Locate the physical sensation and study it with interest</div></div>
+        <div class="block"><div class="micro" style="color:var(--accept)">Thoughts</div>
+        <div class="lead">Notice thoughts appearing and observe them without judgement</div></div>
+      </div>`
+    }
+  };
+
+  document.querySelectorAll(".seg button").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".seg button").forEach(b => b.classList.remove("on"));
+      btn.classList.add("on");
+      document.querySelectorAll(".view").forEach(v => v.classList.remove("on"));
+      document.getElementById("view-" + btn.dataset.view).classList.add("on");
+    });
+  });
+
+  document.querySelectorAll(".cue-switch button").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".cue-switch button").forEach(b => b.classList.remove("on"));
+      btn.classList.add("on");
+      const c = cues[btn.dataset.cue];
+      const label = document.getElementById("cue-stage-label");
+      label.textContent = c.label;
+      label.style.color = c.color;
+      document.getElementById("cue-body").innerHTML = c.html;
+    });
+  });
+
+  const record = document.getElementById("record");
+  document.getElementById("open-record").onclick = () => record.classList.add("on");
+  document.getElementById("close-record").onclick = () => record.classList.remove("on");
+  record.addEventListener("click", e => { if (e.target === record) record.classList.remove("on"); });
+</script>
+</body>
+</html>

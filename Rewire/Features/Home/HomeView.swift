@@ -1,7 +1,8 @@
 import SwiftUI
 
 /// Home: greeting, aggregate stats, and the pathway garden. Cards zoom into
-/// training; the wizard and archive live in sheets.
+/// training; the wizard opens as a cover; resting pathways use an overlay
+/// sheet so the moon can toggle it closed.
 struct HomeView: View {
     @Environment(PathwayStore.self) private var store
 
@@ -30,12 +31,36 @@ struct HomeView: View {
                     .padding(.bottom, 120)
                 }
                 .scrollIndicators(.hidden)
+                .allowsHitTesting(!showArchive)
 
                 if !store.active.isEmpty {
                     newPathwayButton
+                        .opacity(showArchive ? 0 : 1)
+                        .allowsHitTesting(!showArchive)
+                }
+
+                if showArchive {
+                    archiveOverlay
+                        .transition(.opacity)
+                        .zIndex(1)
+                }
+
+                // Moon stays above the scrim so it can toggle the sheet closed.
+                if showsMoonButton {
+                    VStack {
+                        HStack {
+                            Spacer()
+                            moonButton
+                        }
+                        .padding(.horizontal, Metrics.screenMargin)
+                        .padding(.top, 24)
+                        Spacer()
+                    }
+                    .zIndex(2)
                 }
             }
             .background(Ink.base)
+            .animation(Springs.standard, value: showArchive)
             .navigationDestination(for: Pathway.ID.self) { id in
                 TrainingView(pathwayID: id)
                     .navigationTransition(.zoom(sourceID: id, in: zoom))
@@ -45,12 +70,61 @@ struct HomeView: View {
         .fullScreenCover(item: $wizard) { mode in
             WizardView(mode: mode)
         }
-        .sheet(isPresented: $showArchive) {
-            ArchiveView()
-                .presentationDetents([.medium, .large])
-                .presentationBackground(.thinMaterial)
-                .presentationCornerRadius(32)
+    }
+
+    private var showsMoonButton: Bool {
+        !store.archived.isEmpty || !store.active.isEmpty
+    }
+
+    private var moonButton: some View {
+        Button {
+            withAnimation(Springs.standard) { showArchive.toggle() }
+        } label: {
+            Image(systemName: "moon.zzz")
+                .font(.system(size: 15, weight: .medium))
+                .foregroundStyle(store.archived.isEmpty ? Ink.textTertiary : Ink.textSecondary)
+                .frame(width: 44, height: 44)
+                .background(Circle().fill(.white.opacity(0.05)))
         }
+        .buttonStyle(PressableStyle(scale: 0.92))
+        .accessibilityLabel("Resting pathways")
+    }
+
+    /// Custom resting sheet so the moon can toggle it closed and the
+    /// dimmed area above dismisses — same interaction as the prototype.
+    private var archiveOverlay: some View {
+        GeometryReader { geo in
+            ZStack(alignment: .bottom) {
+                Color.black.opacity(0.45)
+                    .ignoresSafeArea()
+                    .onTapGesture {
+                        withAnimation(Springs.standard) { showArchive = false }
+                    }
+
+                ArchiveView()
+                    .frame(maxWidth: .infinity)
+                    .frame(height: geo.size.height * 0.72, alignment: .top)
+                    .background {
+                        UnevenRoundedRectangle(
+                            topLeadingRadius: 32, bottomLeadingRadius: 0,
+                            bottomTrailingRadius: 0, topTrailingRadius: 32,
+                            style: .continuous
+                        )
+                        .fill(.ultraThinMaterial)
+                        .overlay {
+                            UnevenRoundedRectangle(
+                                topLeadingRadius: 32, bottomLeadingRadius: 0,
+                                bottomTrailingRadius: 0, topTrailingRadius: 32,
+                                style: .continuous
+                            )
+                            .fill(Ink.raised.opacity(0.55))
+                        }
+                        .ignoresSafeArea(edges: .bottom)
+                    }
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
+        }
+        .ignoresSafeArea(edges: .bottom)
     }
 
     // MARK: Header
@@ -80,18 +154,9 @@ struct HomeView: View {
                 }
             }
             Spacer()
-            if !store.archived.isEmpty || !store.active.isEmpty {
-                Button {
-                    showArchive = true
-                } label: {
-                    Image(systemName: "moon.zzz")
-                        .font(.system(size: 15, weight: .medium))
-                        .foregroundStyle(store.archived.isEmpty ? Ink.textTertiary : Ink.textSecondary)
-                        .frame(width: 44, height: 44)
-                        .background(Circle().fill(.white.opacity(0.05)))
-                }
-                .buttonStyle(PressableStyle(scale: 0.92))
-                .accessibilityLabel("Resting pathways")
+            // Reserve space so the floating moon aligns with this slot.
+            if showsMoonButton {
+                Color.clear.frame(width: 44, height: 44)
             }
         }
         .padding(.top, 16)

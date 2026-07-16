@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Rewire — Hold for cue · mockups</title>
+<style>
+  :root {
+    --text-1: #F4F2EC; --text-2: #8E8E9E; --text-3: #55555F;
+    --accept: #3EDDC5; --notice: #FFC24B; --choose: #8B7BFF;
+    --ui: "SF Pro Text", -apple-system, "Segoe UI", system-ui, sans-serif;
+    --voice: "New York", "Iowan Old Style", Georgia, serif;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-font-smoothing: antialiased; }
+  body {
+    min-height: 100vh; background: #101016; color: var(--text-1); font-family: var(--ui);
+    padding: 56px 28px 80px;
+  }
+  .wrap { max-width: 900px; margin: 0 auto; }
+  .eyebrow {
+    font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase;
+    color: var(--text-3); font-weight: 600; margin-bottom: 12px;
+  }
+  h1 { font-family: var(--voice); font-size: 32px; font-weight: 500; margin-bottom: 12px; }
+  .lede { font-size: 15px; color: var(--text-2); line-height: 1.55; max-width: 540px; margin-bottom: 40px; }
+  .grid { display: grid; gap: 14px; }
+  @media (min-width: 720px) { .grid { grid-template-columns: 1fr 1fr; } }
+  @media (min-width: 960px) { .grid { grid-template-columns: 1fr 1fr 1fr 1fr; } }
+  a.card {
+    display: block; text-decoration: none; color: inherit;
+    border-radius: 20px; padding: 22px 18px 20px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+    transition: border-color 0.2s, transform 0.2s;
+  }
+  a.card:hover { border-color: rgba(255,255,255,0.16); transform: translateY(-2px); }
+  a.card .n {
+    font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase;
+    font-weight: 600; margin-bottom: 10px;
+  }
+  a.card h2 { font-family: var(--voice); font-size: 20px; font-weight: 500; margin-bottom: 8px; }
+  a.card p { font-size: 13px; color: var(--text-2); line-height: 1.45; }
+  a.card .line {
+    margin-top: 16px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.06);
+    font-size: 12px; color: var(--text-3); letter-spacing: 0.06em;
+  }
+  .note {
+    margin-top: 40px; font-size: 13px; color: var(--text-3); line-height: 1.5; max-width: 520px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="eyebrow">Design audit · training affordance</div>
+  <h1>Hold to see the cue</h1>
+  <p class="lede">Three ways to teach long-press without breaking the meditation. Language is short. Placement respects the orb as the only hero.</p>
+
+  <div class="grid">
+    <a class="card" href="hold-cue-a.html">
+      <div class="n" style="color:var(--accept)">Mockup A</div>
+      <h2>Orb caption</h2>
+      <p>Icon + “Hold for cue” under the orb — where the finger already rests.</p>
+      <div class="line">HOLD FOR CUE</div>
+    </a>
+    <a class="card" href="hold-cue-b.html">
+      <div class="n" style="color:var(--notice)">Mockup B</div>
+      <h2>Stage whisper</h2>
+      <p>Tracked micro-line under the stage hint. No new region on the canvas.</p>
+      <div class="line">HOLD TO REVEAL</div>
+    </a>
+    <a class="card" href="hold-cue-c.html">
+      <div class="n" style="color:var(--choose)">Mockup C</div>
+      <h2>Touch mark</h2>
+      <p>Breathing touch point. One word: Hold. Disappears from memory once learned.</p>
+      <div class="line">HOLD</div>
+    </a>
+    <a class="card" href="hold-cue-d.html">
+      <div class="n" style="color:var(--accept)">Mockup D</div>
+      <h2>Whisper under orb</h2>
+      <p>B’s “Hold to reveal” + side bars, placed under the orb like A.</p>
+      <div class="line">— HOLD TO REVEAL —</div>
+    </a>
+  </div>
+
+  <p class="note">Recommendation bias: D if you want B’s type language with A’s placement. A for first-session clarity with an icon; C if you want the quietest ongoing presence.</p>
+</div>
+</body>
+</html>

@@ -50,6 +50,9 @@ struct TrainingView: View {
                     .padding(.bottom, 44)
                     .opacity(chromeOpacity)
                 orb(pathway)
+                holdReveal
+                    .padding(.top, 18)
+                    .opacity(chromeOpacity)
                 Spacer()
                 counters(pathway)
                     .padding(.bottom, 36)
@@ -170,6 +173,25 @@ struct TrainingView: View {
                 Haptics.shared.revealClose()
             }
         }
+    }
+
+    /// Quiet affordance under the orb — does not affect orb size or hit target.
+    private var holdReveal: some View {
+        HStack(spacing: 7) {
+            Capsule()
+                .fill(stage.color.opacity(0.4))
+                .frame(width: 12, height: 1)
+            Text("Hold to reveal")
+                .font(.system(size: 11, weight: .medium))
+                .kerning(11 * 0.12)
+                .textCase(.uppercase)
+                .foregroundStyle(Ink.textTertiary)
+            Capsule()
+                .fill(stage.color.opacity(0.4))
+                .frame(width: 12, height: 1)
+        }
+        .accessibilityLabel("Hold the orb to reveal the cue")
+        .animation(Springs.standard, value: stage)
     }
 
     private func counters(_ pathway: Pathway) -> some View {

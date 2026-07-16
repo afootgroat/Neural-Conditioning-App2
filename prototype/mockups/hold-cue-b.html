@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Rewire — Hold cue B · Stage whisper</title>
+<style>
+  :root {
+    --ink: #07070C;
+    --text-1: #F4F2EC;
+    --text-2: #8E8E9E;
+    --text-3: #55555F;
+    --hairline: rgba(255,255,255,0.08);
+    --notice: #FFC24B;
+    --ui: "SF Pro Text", -apple-system, "Segoe UI", system-ui, sans-serif;
+    --voice: "New York", "Iowan Old Style", Georgia, serif;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-font-smoothing: antialiased; }
+  html, body { min-height: 100%; background: #101016; font-family: var(--ui); color: var(--text-1); }
+  .stage {
+    min-height: 100vh; display: flex; flex-direction: column; align-items: center;
+    justify-content: center; gap: 28px; padding: 40px 24px;
+  }
+  .meta { text-align: center; max-width: 420px; }
+  .meta .tag {
+    font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--notice); font-weight: 600; margin-bottom: 8px;
+  }
+  .meta h1 { font-family: var(--voice); font-size: 22px; font-weight: 500; margin-bottom: 6px; }
+  .meta p { font-size: 13px; color: var(--text-2); line-height: 1.5; }
+
+  .phone {
+    position: relative; width: 390px; height: 844px; background: var(--ink);
+    border-radius: 54px; overflow: hidden; flex: none;
+    box-shadow: 0 0 0 10px #000, 0 0 0 12px #2a2a30, 0 40px 100px rgba(0,0,0,0.55);
+  }
+  .island {
+    position: absolute; top: 12px; left: 50%; transform: translateX(-50%);
+    width: 118px; height: 34px; background: #000; border-radius: 20px; z-index: 60;
+  }
+  .aurora {
+    position: absolute; inset: 0; z-index: 0;
+    background:
+      radial-gradient(ellipse 70% 45% at 50% 48%, rgba(255,194,75,0.18), transparent 58%),
+      radial-gradient(ellipse 90% 55% at 80% 12%, rgba(255,194,75,0.07), transparent 50%),
+      var(--ink);
+  }
+
+  .header {
+    position: absolute; top: 62px; left: 24px; right: 24px; z-index: 20;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .icon-btn {
+    width: 44px; height: 44px; border-radius: 50%; background: rgba(255,255,255,0.06);
+    border: none; color: var(--text-2); font-size: 18px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .title { text-align: center; }
+  .title .n { font-size: 15px; font-weight: 600; }
+  .title .m {
+    font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--notice); margin-top: 3px; font-weight: 600;
+  }
+  .spacer { width: 44px; }
+
+  .stage-label {
+    position: absolute; top: 168px; left: 0; right: 0; text-align: center; z-index: 20;
+    animation: fadeRise 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  @keyframes fadeRise {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: none; }
+  }
+  .stage-name {
+    font-size: 15px; font-weight: 700; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--notice);
+  }
+  .stage-hint {
+    font-family: var(--voice); font-size: 17px; color: var(--text-2); margin-top: 10px;
+  }
+
+  /* ——— Affordance B: stage whisper ——— */
+  .hold-whisper {
+    margin-top: 18px;
+    display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+    color: var(--text-3);
+  }
+  .hold-whisper .bar {
+    width: 12px; height: 1px;
+    background: color-mix(in srgb, var(--notice) 35%, transparent);
+  }
+  .hold-whisper .copy {
+    font-size: 11px; font-weight: 500; letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .orb-wrap {
+    position: absolute; left: 50%; top: 52%; transform: translate(-50%, -50%);
+    width: 288px; height: 288px; z-index: 10;
+  }
+  .orb {
+    width: 100%; height: 100%; border-radius: 50%;
+    background:
+      radial-gradient(circle at 42% 38%, rgba(255,236,180,0.5), transparent 28%),
+      radial-gradient(circle at 50% 55%, rgba(255,194,75,0.8), rgba(90,60,10,0.35) 55%, transparent 70%);
+    box-shadow:
+      0 0 60px rgba(255,194,75,0.28),
+      0 0 120px rgba(255,194,75,0.12),
+      inset 0 0 40px rgba(255,255,255,0.08);
+    animation: breath 6s ease-in-out infinite;
+  }
+  @keyframes breath {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.03); }
+  }
+  .arc {
+    position: absolute; inset: -22px; border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.07);
+    border-top-color: var(--notice);
+    border-right-color: color-mix(in srgb, var(--notice) 35%, transparent);
+    transform: rotate(-90deg);
+  }
+
+  .counters {
+    position: absolute; bottom: 64px; left: 0; right: 0; text-align: center; z-index: 20;
+  }
+  .counters .row { display: flex; justify-content: center; gap: 28px; align-items: center; }
+  .counters .v { font-size: 24px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .counters .l {
+    font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--text-3); margin-top: 4px; font-weight: 600;
+  }
+  .counters .sep { width: 1px; height: 26px; background: var(--hairline); }
+  .next { font-size: 12px; color: var(--text-3); margin-top: 14px; font-weight: 500; }
+
+  .nav { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+  .nav a {
+    color: var(--text-2); text-decoration: none; font-size: 12px;
+    padding: 8px 14px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.1);
+  }
+  .nav a.here { color: var(--notice); border-color: rgba(255,194,75,0.35); }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="meta">
+    <div class="tag">Mockup B · Stage whisper</div>
+    <h1>Hold to reveal</h1>
+    <p>Lives with the stage chrome — after the hint, as a tracked micro-line. Zero new regions on the canvas.</p>
+  </div>
+
+  <div class="phone">
+    <div class="aurora"></div>
+    <div class="island"></div>
+
+    <div class="header">
+      <button class="icon-btn" type="button">⌄</button>
+      <div class="title">
+        <div class="n">Road rage</div>
+        <div class="m">Foundation</div>
+      </div>
+      <div class="spacer"></div>
+    </div>
+
+    <div class="stage-label">
+      <div class="stage-name">Notice</div>
+      <div class="stage-hint">See it happening</div>
+      <div class="hold-whisper" aria-hidden="true">
+        <span class="bar"></span>
+        <span class="copy">Hold to reveal</span>
+        <span class="bar"></span>
+      </div>
+    </div>
+
+    <div class="orb-wrap">
+      <div class="arc" aria-hidden="true"></div>
+      <div class="orb" aria-hidden="true"></div>
+    </div>
+
+    <div class="counters">
+      <div class="row">
+        <div><div class="v">12</div><div class="l">Today</div></div>
+        <div class="sep"></div>
+        <div><div class="v">47</div><div class="l">Lifetime</div></div>
+      </div>
+      <div class="next">3 reps to Strengthening</div>
+    </div>
+  </div>
+
+  <nav class="nav">
+    <a href="hold-cue-a.html">A · Orb caption</a>
+    <a class="here" href="hold-cue-b.html">B · Stage whisper</a>
+    <a href="hold-cue-c.html">C · Touch mark</a>
+    <a href="hold-cue.html">All three</a>
+  </nav>
+</div>
+</body>
+</html>

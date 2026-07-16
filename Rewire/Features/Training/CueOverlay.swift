@@ -2,6 +2,7 @@ import SwiftUI
 
 /// Hold-to-reveal cue text for the current stage — the "script" the user is
 /// rehearsing. Serif voice on an ink scrim; disappears on release.
+/// Notice / Accept use fixed practice lines (not the old-reaction record).
 struct CueOverlay: View {
     var stage: RepStage
     var pathway: Pathway
@@ -31,7 +32,8 @@ struct CueOverlay: View {
             VStack(spacing: 14) {
                 Text(pathway.stimulus)
                     .font(.voice(24))
-                    .foregroundStyle(Ink.textPrimary)
+                    .italic()
+                    .foregroundStyle(Ink.textPrimary.opacity(0.85))
                 Text("Bring it to mind. Let it feel real.")
                     .font(.voice(15))
                     .foregroundStyle(Ink.textSecondary)
@@ -39,20 +41,27 @@ struct CueOverlay: View {
             .multilineTextAlignment(.center)
 
         case .notice:
-            VStack(alignment: .leading, spacing: 18) {
-                cueRow(label: "Feeling", text: pathway.oldFeelings)
-                cueRow(label: "Thinking", text: pathway.oldThoughts)
-                cueRow(label: "Doing", text: pathway.oldBehavior)
+            VStack(spacing: 0) {
+                Text(PracticeScript.noticeLine1)
+                Text(PracticeScript.noticeLine2)
+                Spacer().frame(height: 14)
+                Text(PracticeScript.noticeAction)
             }
+            .font(.voice(22))
+            .italic()
+            .foregroundStyle(Ink.textPrimary.opacity(0.88))
+            .multilineTextAlignment(.center)
 
         case .accept:
-            VStack(spacing: 16) {
-                Text("It's already here.")
-                Text("You don't have to fix the feeling.")
-                Text("Breathe once, and let it be.")
+            VStack(spacing: 0) {
+                Text(PracticeScript.acceptLine1)
+                Text(PracticeScript.acceptLine2)
+                Spacer().frame(height: 14)
+                Text(PracticeScript.acceptAction)
             }
-            .font(.voice(21))
-            .foregroundStyle(Ink.textPrimary)
+            .font(.voice(22))
+            .italic()
+            .foregroundStyle(Ink.textPrimary.opacity(0.88))
             .multilineTextAlignment(.center)
 
         case .choose:
@@ -61,19 +70,10 @@ struct CueOverlay: View {
                              color: pathway.hue.color)
                 Text("“\(pathway.mantra)”")
                     .font(.voice(26))
-                    .foregroundStyle(Ink.textPrimary)
+                    .italic()
+                    .foregroundStyle(Ink.textPrimary.opacity(0.9))
                     .multilineTextAlignment(.center)
             }
         }
-    }
-
-    private func cueRow(label: String, text: String) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            TrackedLabel(text: label, size: 10, color: stage.color.opacity(0.9))
-            Text(text)
-                .font(.voice(19))
-                .foregroundStyle(Ink.textPrimary)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }

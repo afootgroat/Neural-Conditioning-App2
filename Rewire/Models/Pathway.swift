@@ -38,6 +38,36 @@ enum RepStage: Int, CaseIterable, Codable {
         case .choose:  "Take the new path"
         }
     }
+
+    /// Fixed practice line for Notice / Accept (not the user's old-reaction record).
+    var practiceLine: String? {
+        switch self {
+        case .notice: PracticeScript.notice
+        case .accept: PracticeScript.accept
+        default: nil
+        }
+    }
+}
+
+/// Shared rehearsal copy — blueprint and training cues stay in lockstep.
+enum PracticeScript {
+    static let noticeLine1 = "thoughts and emotions arise"
+    static let noticeLine2 = "on their own"
+    static let noticeAction = "observe them without judgement"
+
+    /// Notice cue: two-line lead, one blank line, then the action.
+    static var notice: String {
+        "\(noticeLine1)\n\(noticeLine2)\n\n\(noticeAction)"
+    }
+
+    static let acceptLine1 = "passing thoughts and"
+    static let acceptLine2 = "physical sensations"
+    static let acceptAction = "study them with interest"
+
+    /// Accept cue: two-line lead, one blank line, then the action.
+    static var accept: String {
+        "\(acceptLine1)\n\(acceptLine2)\n\n\(acceptAction)"
+    }
 }
 
 // MARK: - Maturity

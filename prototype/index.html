@@ -102,8 +102,10 @@
   #training .title .m { font-size: 10px; margin-top: 3px; }
   #stage-label { position: absolute; top: 176px; left: 0; right: 0; text-align: center; z-index: 20; pointer-events: none; transition: opacity 0.35s; }
   #training.cue-open #stage-label, #training.cue-open #counters, #training.cue-open .header,
-  #training.celebrating #stage-label, #training.celebrating #counters, #training.celebrating .header { opacity: 0; }
-  #counters, #training .header { transition: opacity 0.35s; }
+  #training.cue-open #hold-reveal,
+  #training.celebrating #stage-label, #training.celebrating #counters, #training.celebrating .header,
+  #training.celebrating #hold-reveal { opacity: 0; }
+  #counters, #training .header, #hold-reveal { transition: opacity 0.35s; }
   #stage-name { font-size: 15px; font-weight: 700; }
   #stage-hint { font-family: var(--voice); font-size: 17px; color: var(--text-2); margin-top: 10px; }
   .stage-swap { animation: stageIn 0.45s cubic-bezier(0.25,1.2,0.45,1); }
@@ -111,6 +113,20 @@
   #orb-hit {
     position: absolute; left: 50%; top: 52%; width: 340px; height: 340px; z-index: 15;
     transform: translate(-50%, -50%); border-radius: 50%; cursor: pointer;
+  }
+  #hold-reveal {
+    position: absolute; left: 0; right: 0;
+    top: calc(52% + 166px + 18px); /* below maturity arc (r=166), app-parity gap */
+    z-index: 20; pointer-events: none;
+    display: flex; align-items: center; justify-content: center; gap: 7px;
+    color: var(--text-3);
+  }
+  #hold-reveal .bar {
+    width: 12px; height: 1px; border-radius: 1px;
+    background: color-mix(in srgb, var(--hold-accent, #8E8E9E) 40%, transparent);
+  }
+  #hold-reveal .copy {
+    font-size: 11px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase;
   }
   #counters { position: absolute; bottom: 64px; left: 0; right: 0; text-align: center; z-index: 20; pointer-events: none; }
   #counters .row { display: flex; justify-content: center; gap: 28px; align-items: center; }
@@ -129,11 +145,16 @@
   @keyframes cueIn { from { opacity: 0; transform: scale(1.02); } to { opacity: 1; transform: none; } }
   #cue .inner { padding: 0 40px; max-width: 480px; }
   #cue .stage-tag { font-size: 12px; margin-bottom: 22px; }
-  #cue .big { font-family: var(--voice); font-size: 24px; color: var(--text-1); line-height: 1.4; }
+  #cue .big {
+    font-family: var(--voice); font-size: 24px; font-style: italic;
+    color: color-mix(in srgb, var(--text-1) 88%, transparent); line-height: 1.4;
+  }
   #cue .whisper { font-family: var(--voice); font-size: 15px; color: var(--text-2); margin-top: 14px; }
-  #cue .cue-row { text-align: left; margin-bottom: 18px; }
-  #cue .cue-row .l { font-size: 10px; margin-bottom: 4px; }
-  #cue .cue-row .t { font-family: var(--voice); font-size: 19px; color: var(--text-1); }
+  #cue .practice {
+    font-family: var(--voice); font-size: 22px; font-style: italic;
+    color: color-mix(in srgb, var(--text-1) 88%, transparent); line-height: 1.45;
+    text-align: center;
+  }
 
   /* weave celebration */
   #weave-overlay {
@@ -198,6 +219,63 @@
   .glow-btn:active { transform: scale(0.96); }
   .glow-btn:disabled { opacity: 0.35; cursor: default; }
 
+  /* ------- quiet field character limits ------- */
+  .ink-field .char-count {
+    margin-top: 10px; font-size: 11px; color: var(--text-3);
+    font-variant-numeric: tabular-nums; letter-spacing: 0.04em;
+    opacity: 0; transition: opacity 0.2s, color 0.2s;
+  }
+  .ink-field .char-count.show { opacity: 1; }
+  .ink-field .char-count.at-limit { color: var(--choose); }
+  .ink-field.at-limit .line {
+    background: color-mix(in srgb, var(--hue, var(--choose)) 100%, transparent);
+    box-shadow: 0 0 12px color-mix(in srgb, var(--hue, var(--choose)) 35%, transparent);
+  }
+
+  /* Quiet inline limit (countdown + whisper, no modal) — name, stimulus, reaction */
+  .reaction-field { margin-top: 28px; }
+  .reaction-field .flabel { margin-top: 0; margin-bottom: 12px; }
+  .reaction-field .ink-field { margin-top: 0; }
+  .name-meter {
+    display: flex; align-items: baseline; justify-content: space-between;
+    gap: 12px; min-height: 20px; margin-top: 10px;
+  }
+  .name-meter .whisper {
+    font-family: var(--voice); font-style: italic; font-size: 13px;
+    color: var(--text-2); opacity: 0; transform: translateY(5px);
+    transition: opacity 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+                transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .name-meter .whisper.on { opacity: 1; transform: none; }
+  .name-meter .count {
+    font-size: 11px; font-weight: 600; color: var(--text-3);
+    font-variant-numeric: tabular-nums; letter-spacing: 0.02em;
+    opacity: 0; transform: scale(0.92); transform-origin: right center;
+    transition: opacity 0.3s ease, color 0.25s ease, transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+    display: flex; align-items: center; gap: 6px; flex: none;
+  }
+  .name-meter .count.show { opacity: 1; transform: none; }
+  .name-meter .count.at-limit { color: var(--hue, var(--choose)); }
+  .name-meter .count .dot {
+    width: 4px; height: 4px; border-radius: 50%;
+    background: var(--hue, var(--choose)); opacity: 0;
+    box-shadow: 0 0 6px var(--hue, var(--choose));
+    transition: opacity 0.25s ease;
+  }
+  .name-meter .count.at-limit .dot { opacity: 1; }
+  .ink-field.name-limit.at-limit .line {
+    background: color-mix(in srgb, var(--hue) 85%, transparent);
+    box-shadow: 0 0 10px color-mix(in srgb, var(--hue) 40%, transparent);
+  }
+  .ink-field.name-limit.pulse input {
+    animation: namePulse 0.35s cubic-bezier(0.3, 1.4, 0.5, 1);
+  }
+  @keyframes namePulse {
+    0% { transform: scale(1); }
+    40% { transform: scale(1.012); }
+    100% { transform: scale(1); }
+  }
+
   /* blueprint */
   .bp-card { padding: 24px; margin-top: 28px; }
   .bp-row { display: flex; gap: 16px; }
@@ -206,15 +284,52 @@
   .bp-line { width: 1px; flex: 1; background: var(--hairline); margin: 4px 0; }
   .bp-body { flex: 1; padding-bottom: 24px; }
   .bp-row:last-child .bp-body { padding-bottom: 0; }
-  .bp-l { font-size: 10px; margin-bottom: 6px; }
-  .bp-t { font-family: var(--voice); font-size: 18px; color: var(--text-1); line-height: 1.4; }
-  .bp-t .v { color: var(--text-3); font-size: 15px; }
-  .privacy { display: flex; gap: 8px; justify-content: center; align-items: center; font-size: 12px; color: var(--text-3); margin-top: 24px; }
+  .bp-l { font-size: 10px; margin-bottom: 8px; }
+  .bp-t {
+    font-family: var(--voice); font-size: 15px; font-style: italic;
+    color: var(--text-2); line-height: 1.55; letter-spacing: 0.005em;
+  }
+  .bp-t.when {
+    font-size: 16px;
+    color: color-mix(in srgb, var(--text-1) 70%, var(--text-2));
+  }
+  .bp-t.choose {
+    color: color-mix(in srgb, var(--text-2) 70%, var(--text-1));
+  }
+  .bp-record {
+    margin-top: 14px; border-radius: 22px; padding: 16px 18px 14px;
+    background: rgba(255,255,255,0.025); border: 1px solid rgba(255,255,255,0.06);
+  }
+  .bp-record-head {
+    display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;
+  }
+  .bp-record-head .title {
+    font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
+    font-weight: 600; color: var(--text-3);
+  }
+  .bp-record-head .badge { font-size: 10px; color: var(--text-3); }
+  .bp-record-line {
+    display: grid; grid-template-columns: 64px 1fr; gap: 8px;
+    padding: 7px 0; border-top: 1px solid var(--hairline);
+  }
+  .bp-record-line:first-of-type { border-top: none; padding-top: 0; }
+  .bp-record-line .k { font-size: 11px; color: var(--text-3); }
+  .bp-record-line .v {
+    font-family: var(--voice); font-style: italic; font-size: 14px;
+    color: var(--text-3); line-height: 1.35;
+  }
+  .privacy { display: flex; gap: 8px; justify-content: center; align-items: center; font-size: 12px; color: var(--text-3); margin-top: 18px; }
 
   /* ------- archive sheet ------- */
+  #archive-scrim {
+    position: absolute; left: 0; right: 0; bottom: 0; top: 80px; z-index: 44; display: none;
+    background: rgba(7,7,12,0.45);
+  }
+  #archive-scrim.visible { display: block; animation: archiveScrimIn 0.3s ease both; }
+  @keyframes archiveScrimIn { from { opacity: 0; } to { opacity: 1; } }
   #archive {
     position: absolute; left: 0; right: 0; bottom: 0; top: 30%; z-index: 45; display: none;
-    background: rgba(24,24,32,0.85); backdrop-filter: blur(30px);
+    background: rgba(24,24,32,0.92); backdrop-filter: blur(30px);
     border-radius: 32px 32px 0 0; padding: 28px 24px;
   }
   #archive.visible { display: block; animation: sheetUp 0.5s cubic-bezier(0.25,1.1,0.4,1); }
@@ -223,7 +338,11 @@
   #archive .sub { font-size: 13px; color: var(--text-2); margin: 4px 0 20px; }
   .rest-card { display: flex; align-items: center; gap: 14px; padding: 14px 18px; border-radius: 22px; margin-bottom: 12px; }
   .rest-card .name { font-size: 16px; font-weight: 600; color: var(--text-2); }
-  .rest-card .meta { font-size: 12px; color: var(--text-3); margin-top: 3px; }
+  .rest-card .meta {
+    font-size: 12px; font-weight: 500; margin-top: 3px;
+    color: color-mix(in srgb, var(--text-2) 78%, transparent);
+  }
+  #btn-archive { position: relative; z-index: 46; }
 
   /* ------- debug panel ------- */
   #debug {
@@ -284,6 +403,11 @@
                 style="filter: drop-shadow(0 0 4px currentColor)"/>
       </svg>
       <div id="orb-hit"></div>
+      <div id="hold-reveal" aria-hidden="true">
+        <span class="bar"></span>
+        <span class="copy">Hold to reveal</span>
+        <span class="bar"></span>
+      </div>
       <div id="counters">
         <div class="row">
           <div class="c"><div class="v mono" id="c-today">0</div><div class="l tracked" style="color:var(--text-3)">Today</div></div>
@@ -316,6 +440,7 @@
     </div>
 
     <!-- ARCHIVE -->
+    <div id="archive-scrim" aria-hidden="true"></div>
     <div id="archive">
       <h2>Resting</h2>
       <div class="sub">Pathways you've set down. They remember everything.</div>
@@ -596,6 +721,26 @@ function hexToRgb(hex) {
 /* =========================================================================
    App state (mirrors TrainingView)
    ========================================================================= */
+const NAME_MAX = 35;
+const STIMULUS_MAX = 35;
+const REACTION_MAX = 35;
+const PRACTICE = {
+  noticeL1: "thoughts and emotions arise",
+  noticeL2: "on their own",
+  noticeAction: "observe them without judgement",
+  acceptL1: "passing thoughts and",
+  acceptL2: "physical sensations",
+  acceptAction: "study them with interest",
+};
+PRACTICE.notice =
+  `${PRACTICE.noticeL1}<br>${PRACTICE.noticeL2}<br><br>${PRACTICE.noticeAction}`;
+PRACTICE.noticeCue =
+  `${PRACTICE.noticeL1}<br>${PRACTICE.noticeL2}<br><br>${PRACTICE.noticeAction}`;
+PRACTICE.accept =
+  `${PRACTICE.acceptL1}<br>${PRACTICE.acceptL2}<br><br>${PRACTICE.acceptAction}`;
+PRACTICE.acceptCue =
+  `${PRACTICE.acceptL1}<br>${PRACTICE.acceptL2}<br><br>${PRACTICE.acceptAction}`;
+
 const state = {
   screen: "home",
   current: pathways[0],
@@ -605,6 +750,7 @@ const state = {
   paused: false, fireScrub: 0, chargeOverride: -0.01,
   wizardStep: 0,
   draft: null,
+  fieldLimitShown: {},
 };
 const clock = { t: 0, last: performance.now() };
 
@@ -809,6 +955,7 @@ function renderTraining() {
   const sh = document.getElementById("stage-hint");
   sh.textContent = st.hint;
   sh.classList.remove("stage-swap"); void sh.offsetWidth; sh.classList.add("stage-swap");
+  document.getElementById("hold-reveal").style.setProperty("--hold-accent", st.hex);
   document.getElementById("c-today").textContent = p.today;
   document.getElementById("c-life").textContent = p.lifetime;
   const arc = document.getElementById("arc-fill");
@@ -830,11 +977,9 @@ function renderCue() {
     <div class="big">${p.stimulus}</div>
     <div class="whisper">Bring it to mind. Let it feel real.</div>`;
   else if (st.key === "notice") body = `
-    <div class="cue-row"><div class="l tracked" style="color:${st.hex}e5">Feeling</div><div class="t">${p.feelings}</div></div>
-    <div class="cue-row"><div class="l tracked" style="color:${st.hex}e5">Thinking</div><div class="t">${p.thoughts}</div></div>
-    <div class="cue-row"><div class="l tracked" style="color:${st.hex}e5">Doing</div><div class="t">${p.doing}</div></div>`;
+    <div class="practice">${PRACTICE.noticeCue}</div>`;
   else if (st.key === "accept") body = `
-    <div class="big" style="font-size:21px;line-height:1.9">It's already here.<br>You don't have to fix the feeling.<br>Breathe once, and let it be.</div>`;
+    <div class="practice">${PRACTICE.acceptCue}</div>`;
   else body = `
     <div class="l tracked" style="color:${HUES[p.hue]};font-size:11px;margin-bottom:18px">${p.emotion}</div>
     <div class="big" style="font-size:26px">“${p.mantra}”</div>`;
@@ -905,6 +1050,7 @@ function openWizard() {
   state.draft = { name: "", stimulus: "", feelings: "", thoughts: "", doing: "",
                   emotion: "", hue: "iris", mantra: "", custom: "" };
   state.wizardStep = 0;
+  state.fieldLimitShown = {};
   showScreen("wizard");
   renderWizard(true);
 }
@@ -916,12 +1062,30 @@ function wizardValid() {
   if (s === 3) return d.emotion && d.mantra.trim().length > 0;
   return true;
 }
-function inkField(id, placeholder, value, label) {
+function inkField(id, placeholder, value, label, opts = {}) {
+  const count = opts.max != null
+    ? `<div class="char-count" id="${id}-count">${value.length} / ${opts.max}</div>`
+    : "";
   return `${label ? `<div class="flabel tracked" style="color:${HUES[state.draft.hue]}e5">${label}</div>` : ""}
-    <div class="ink-field" style="--hue:${HUES[state.draft.hue]}">
-      <input id="${id}" placeholder="${placeholder}" value="${value.replace(/"/g,"&quot;")}" autocomplete="off">
+    <div class="ink-field" style="--hue:${HUES[state.draft.hue]}" ${opts.max != null ? `data-max="${opts.max}"` : ""}>
+      <input id="${id}" placeholder="${placeholder}" value="${value.replace(/"/g,"&quot;")}" autocomplete="off"${opts.max != null ? ` maxlength="${opts.max}"` : ""}>
       <div class="line"></div>
+      ${count}
     </div>`;
+}
+function reactionField(id, placeholder, value, label, whisper) {
+  const hue = HUES[state.draft.hue];
+  return `<div class="reaction-field">
+    <div class="flabel tracked" style="color:${hue}e5">${label}</div>
+    <div class="ink-field name-limit" id="${id}-field" style="--hue:${hue}">
+      <input id="${id}" placeholder="${placeholder}" value="${value.replace(/"/g,"&quot;")}" autocomplete="off" maxlength="${REACTION_MAX}">
+      <div class="line"></div>
+      <div class="name-meter">
+        <div class="whisper" id="${id}-whisper">${whisper}</div>
+        <div class="count" id="${id}-count"><span class="dot"></span><span class="n">10</span></div>
+      </div>
+    </div>
+  </div>`;
 }
 function renderWizard(forward) {
   const host = document.getElementById("wstep-host");
@@ -935,17 +1099,31 @@ function renderWizard(forward) {
   if (s === 0) html = `
     <div class="wq">Name the pattern.</div>
     <div class="ww">Short and honest — the way you'd describe it to yourself. “Road rage.” “Doomscrolling.” “Snapping at the kids.”</div>
-    ${inkField("f-name", "Road rage", d.name)}`;
+    <div class="ink-field name-limit" id="name-field" style="--hue:${hue}">
+      <input id="f-name" placeholder="Road rage" value="${d.name.replace(/"/g,"&quot;")}" autocomplete="off" maxlength="${NAME_MAX}">
+      <div class="line"></div>
+      <div class="name-meter">
+        <div class="whisper" id="name-whisper">A name, not a sentence.</div>
+        <div class="count" id="name-count"><span class="dot"></span><span class="n">10</span></div>
+      </div>
+    </div>`;
   else if (s === 1) html = `
     <div class="wq">What sets it off?</div>
     <div class="ww">The trigger, as a scene you can picture. You'll rehearse summoning this moment on purpose.</div>
-    ${inkField("f-stimulus", "Someone cuts me off in traffic", d.stimulus)}`;
+    <div class="ink-field name-limit" id="stimulus-field" style="--hue:${hue}">
+      <input id="f-stimulus" placeholder="Someone cuts me off in traffic" value="${d.stimulus.replace(/"/g,"&quot;")}" autocomplete="off" maxlength="${STIMULUS_MAX}">
+      <div class="line"></div>
+      <div class="name-meter">
+        <div class="whisper" id="stimulus-whisper">Brief enough to summarize in a single breath.</div>
+        <div class="count" id="stimulus-count"><span class="dot"></span><span class="n">10</span></div>
+      </div>
+    </div>`;
   else if (s === 2) html = `
     <div class="wq">What happens now?</div>
-    <div class="ww">Capture the old reaction so you can catch it in the act.</div>
-    ${inkField("f-feelings", "A hot flash of anger", d.feelings, "I feel…")}
-    ${inkField("f-thoughts", "“They did that on purpose.”", d.thoughts, "I think…")}
-    ${inkField("f-doing", "Tailgate, mutter, grip the wheel", d.doing, "I do…")}`;
+    <div class="ww">Capture the old reaction for your record — so you can recognize it later. It won’t be practiced in training.</div>
+    ${reactionField("f-feelings", "A hot flash of anger", d.feelings, "I feel…", "Name the feeling.")}
+    ${reactionField("f-thoughts", "“They did that on purpose.”", d.thoughts, "I think…", "One thought.")}
+    ${reactionField("f-doing", "Tailgate, mutter, grip the wheel", d.doing, "I do…", "Just the action.")}`;
   else if (s === 3) {
     html = `
     <div class="wq">Choose the new path.</div>
@@ -988,8 +1166,11 @@ function renderWizard(forward) {
     el.onfocus = () => el.closest(".ink-field").classList.add("focus");
     el.onblur = () => el.closest(".ink-field").classList.remove("focus");
   };
-  bind("f-name","name"); bind("f-stimulus","stimulus");
-  bind("f-feelings","feelings"); bind("f-thoughts","thoughts"); bind("f-doing","doing");
+  bindNameField();
+  bindStimulusField();
+  bindReactionField("f-feelings", "feelings");
+  bindReactionField("f-thoughts", "thoughts");
+  bindReactionField("f-doing", "doing");
   const custom = document.getElementById("f-custom");
   if (custom) {
     custom.oninput = () => {
@@ -1015,25 +1196,110 @@ function renderWizard(forward) {
   });
   refreshContinue();
 }
+
+function updateLimitedMeter(fieldId, countId, whisperId, len, max, flagKey) {
+  const field = document.getElementById(fieldId);
+  const count = document.getElementById(countId);
+  const whisper = document.getElementById(whisperId);
+  if (!field || !count || !whisper) return;
+  const remaining = Math.max(0, max - len);
+  const near = remaining <= 10;
+  const atLimit = remaining === 0;
+  count.classList.toggle("show", near);
+  count.classList.toggle("at-limit", atLimit);
+  count.querySelector(".n").textContent = atLimit ? "Set" : String(remaining);
+  whisper.classList.toggle("on", atLimit && !!state.fieldLimitShown[flagKey]);
+  field.classList.toggle("at-limit", atLimit);
+}
+
+function bindLimitedField(inputId, draftKey, max, fieldId, countId, whisperId) {
+  const el = document.getElementById(inputId);
+  if (!el) return;
+  const field = document.getElementById(fieldId) || el.closest(".ink-field");
+  const sync = (len) => updateLimitedMeter(fieldId, countId, whisperId, len, max, draftKey);
+  const pulse = () => {
+    field.classList.remove("pulse");
+    void field.offsetWidth;
+    field.classList.add("pulse");
+  };
+  sync(el.value.length);
+  el.onfocus = () => field.classList.add("focus");
+  el.onblur = () => field.classList.remove("focus");
+  el.oninput = () => {
+    const prevLen = (state.draft[draftKey] || "").length;
+    let value = el.value;
+    if (value.length > max) {
+      value = value.slice(0, max);
+      el.value = value;
+    }
+    if (value.length < max) state.fieldLimitShown[draftKey] = false;
+    state.draft[draftKey] = value;
+    sync(value.length);
+    if (value.length >= max && prevLen < max) {
+      state.fieldLimitShown[draftKey] = true;
+      sync(value.length);
+      pulse();
+    }
+    refreshContinue();
+  };
+  el.onkeydown = (e) => {
+    if (el.value.length >= max
+        && e.key.length === 1
+        && !e.metaKey && !e.ctrlKey && !e.altKey) {
+      if (!state.fieldLimitShown[draftKey]) {
+        state.fieldLimitShown[draftKey] = true;
+        sync(el.value.length);
+        pulse();
+      }
+    }
+  };
+}
+
+function bindNameField() {
+  bindLimitedField("f-name", "name", NAME_MAX, "name-field", "name-count", "name-whisper");
+}
+
+function bindStimulusField() {
+  bindLimitedField("f-stimulus", "stimulus", STIMULUS_MAX, "stimulus-field", "stimulus-count", "stimulus-whisper");
+}
+
+function bindReactionField(inputId, draftKey) {
+  bindLimitedField(inputId, draftKey, REACTION_MAX, `${inputId}-field`, `${inputId}-count`, `${inputId}-whisper`);
+}
+
 function renderBlueprint() {
   const d = state.draft;
-  const row = (label, accent, body, last) => `
+  const row = (label, accent, body, cls, last) => `
     <div class="bp-row">
       <div class="bp-rail"><div class="bp-dot" style="background:${accent};box-shadow:0 0 6px ${accent}cc"></div>${last?"":`<div class="bp-line"></div>`}</div>
-      <div class="bp-body"><div class="bp-l tracked" style="color:${accent}f0">${label}</div><div class="bp-t">${body}</div></div>
+      <div class="bp-body"><div class="bp-l tracked" style="color:${accent}f0">${label}</div><div class="bp-t ${cls||""}">${body}</div></div>
     </div>`;
-  const notice = ["feelings","thoughts","doing"].filter(k => d[k].trim())
-    .map(k => `<span class="v">${k === "feelings" ? "feeling" : k === "thoughts" ? "thinking" : "doing"} </span>${d[k]}`)
-    .join("<br>");
+  const recordLines = [
+    ["feeling", d.feelings],
+    ["thinking", d.thoughts],
+    ["doing", d.doing],
+  ].filter(([, v]) => v.trim()).map(([k, v]) =>
+    `<div class="bp-record-line"><div class="k">${k}</div><div class="v">${v}</div></div>`
+  ).join("");
+  const record = recordLines
+    ? `<div class="bp-record">
+        <div class="bp-record-head">
+          <div class="title">Your record</div>
+          <div class="badge">Not practiced · kept privately</div>
+        </div>
+        ${recordLines}
+      </div>`
+    : "";
   return `
     <div class="wq">Your blueprint.</div>
     <div class="ww">Read it once, slowly. This is the path you'll practice.</div>
     <div class="glass bp-card">
-      ${row("When", STAGES[0].hex, d.stimulus)}
-      ${row("I notice", STAGES[1].hex, notice)}
-      ${row("I accept", STAGES[2].hex, "that it's here — without a fight.")}
-      ${row("I choose " + d.emotion.toLowerCase(), STAGES[3].hex, "“" + d.mantra + "”", true)}
+      ${row("When", STAGES[0].hex, d.stimulus, "when")}
+      ${row("I notice", STAGES[1].hex, PRACTICE.notice)}
+      ${row("I accept", STAGES[2].hex, PRACTICE.accept)}
+      ${row("I choose " + d.emotion.toLowerCase(), STAGES[3].hex, d.mantra, "choose", true)}
     </div>
+    ${record}
     <div class="privacy">🔒 Stays on this device. No account, no cloud.</div>`;
 }
 function refreshContinue() {
@@ -1075,14 +1341,35 @@ function renderArchive() {
       <button class="icon-btn" style="width:40px;height:40px;font-size:13px">✕</button>
     </div>`).join("");
 }
-document.getElementById("btn-archive").onclick = () => {
+function isArchiveOpen() {
+  return document.getElementById("archive").classList.contains("visible");
+}
+function openArchive() {
   renderArchive();
   document.getElementById("archive").classList.add("visible");
+  document.getElementById("archive-scrim").classList.add("visible");
+  document.getElementById("archive-scrim").setAttribute("aria-hidden", "false");
+}
+function closeArchive() {
+  document.getElementById("archive").classList.remove("visible");
+  document.getElementById("archive-scrim").classList.remove("visible");
+  document.getElementById("archive-scrim").setAttribute("aria-hidden", "true");
+}
+function toggleArchive() {
+  if (isArchiveOpen()) closeArchive();
+  else openArchive();
+}
+document.getElementById("btn-archive").onclick = (e) => {
+  e.stopPropagation();
+  toggleArchive();
 };
+document.getElementById("archive-scrim").onclick = closeArchive;
+document.getElementById("archive").onclick = (e) => e.stopPropagation();
 document.getElementById("phone").addEventListener("click", e => {
-  const arch = document.getElementById("archive");
-  if (arch.classList.contains("visible") && !arch.contains(e.target)
-      && e.target.id !== "btn-archive") arch.classList.remove("visible");
+  if (!isArchiveOpen()) return;
+  if (document.getElementById("archive").contains(e.target)) return;
+  if (e.target.closest("#btn-archive")) return;
+  closeArchive();
 });
 
 /* =========================================================================
@@ -1091,7 +1378,7 @@ document.getElementById("phone").addEventListener("click", e => {
 function showScreen(name) {
   state.screen = name;
   // Any screen change dismisses the archive sheet (it's a modal over Home).
-  document.getElementById("archive").classList.remove("visible");
+  closeArchive();
   document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
   document.getElementById(name).classList.add("active");
   if (name === "home") renderHome();
@@ -1103,7 +1390,7 @@ document.getElementById("new-pathway").onclick = openWizard;
 document.querySelectorAll("#debug [data-scr]").forEach(b => b.onclick = () => {
   if (b.dataset.scr === "wizard") openWizard(); else showScreen(b.dataset.scr);
 });
-document.getElementById("dbg-archive").onclick = () => { showScreen("home"); renderArchive(); document.getElementById("archive").classList.add("visible"); };
+document.getElementById("dbg-archive").onclick = () => { showScreen("home"); openArchive(); };
 document.getElementById("dbg-fire").onclick = () => { showScreen("training"); state.firedAt = clock.t; };
 document.getElementById("dbg-weave").onclick = () => { showScreen("training"); state.surgeAt = clock.t; showWeave(MATURITY[2]); };
 document.getElementById("dbg-cue").onclick = () => {

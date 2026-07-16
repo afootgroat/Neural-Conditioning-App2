@@ -31,39 +31,171 @@ struct InkField: View {
     @Binding var text: String
     var hue: Color
     var focusOnAppear: Bool = false
+    var maxCharacters: Int? = nil
+    var singleLine: Bool = false
+    var onLimitReached: (() -> Void)? = nil
 
     @FocusState private var focused: Bool
 
+    private var atLimit: Bool {
+        guard let maxCharacters else { return false }
+        return text.count >= maxCharacters
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            TextField("", text: $text, axis: .vertical)
-                .font(.voice(20))
-                .foregroundStyle(Ink.textPrimary)
-                .tint(hue)
-                .lineLimit(1...4)
-                .focused($focused)
-                .overlay(alignment: .leadingFirstTextBaseline) {
-                    if text.isEmpty {
-                        Text(placeholder)
-                            .font(.voice(20))
-                            .foregroundStyle(Ink.textTertiary)
-                            .allowsHitTesting(false)
-                    }
+            Group {
+                if singleLine {
+                    TextField("", text: $text)
+                } else {
+                    TextField("", text: $text, axis: .vertical)
+                        .lineLimit(1...4)
                 }
+            }
+            .font(.voice(20))
+            .foregroundStyle(Ink.textPrimary)
+            .tint(hue)
+            .focused($focused)
+            .overlay(alignment: .leadingFirstTextBaseline) {
+                if text.isEmpty {
+                    Text(placeholder)
+                        .font(.voice(20))
+                        .foregroundStyle(Ink.textTertiary)
+                        .allowsHitTesting(false)
+                }
+            }
+            .onChange(of: text) { oldValue, newValue in
+                guard let maxCharacters else { return }
+                if newValue.count > maxCharacters {
+                    text = String(newValue.prefix(maxCharacters))
+                    onLimitReached?()
+                } else if newValue.count == maxCharacters, oldValue.count < maxCharacters {
+                    onLimitReached?()
+                }
+            }
+
             Rectangle()
-                .fill(focused ? hue.opacity(0.7) : Ink.hairline)
+                .fill(lineColor)
                 .frame(height: 1)
-                .animation(.easeOut(duration: 0.25), value: focused)
+                .shadow(color: atLimit ? hue.opacity(0.45) : .clear, radius: atLimit ? 6 : 0)
+                .animation(.easeOut(duration: 0.28), value: focused)
+                .animation(Springs.snappy, value: atLimit)
         }
         .contentShape(Rectangle())
         .onTapGesture { focused = true }
         .onAppear {
             if focusOnAppear {
-                // Let the step transition land before summoning the keyboard.
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) {
                     focused = true
                 }
             }
+        }
+    }
+
+    private var lineColor: Color {
+        if atLimit { return hue.opacity(0.85) }
+        if focused { return hue.opacity(0.7) }
+        return Ink.hairline
+    }
+}
+
+/// Ink field with the quiet countdown meter + italic settle whisper.
+/// Used on name, stimulus, and each old-reaction line — one pattern, many surfaces.
+struct LimitedInkField: View {
+    var placeholder: String
+    @Binding var text: String
+    var hue: Color
+    var maxCharacters: Int
+    var whisper: String
+    var singleLine: Bool = false
+    var focusOnAppear: Bool = false
+
+    @State private var showLimitWhisper = false
+    @State private var didAnnounceLimit = false
+    @State private var limitPulse = false
+
+    private var remaining: Int { max(0, maxCharacters - text.count) }
+    private var nearLimit: Bool { remaining <= 10 }
+    private var atLimit: Bool { remaining == 0 }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            InkField(
+                placeholder: placeholder,
+                text: $text,
+                hue: hue,
+                focusOnAppear: focusOnAppear,
+                maxCharacters: maxCharacters,
+                singleLine: singleLine,
+                onLimitReached: announceLimit
+            )
+            .scaleEffect(limitPulse ? 1.012 : 1, anchor: .leading)
+            .animation(Springs.snappy, value: limitPulse)
+
+            // Meter + whisper sit in one quiet row under the ink line.
+            HStack(alignment: .firstTextBaseline, spacing: 12) {
+                if showLimitWhisper {
+                    Text(whisper)
+                        .font(.voice(13))
+                        .italic()
+                        .foregroundStyle(Ink.textSecondary)
+                        .transition(.asymmetric(
+                            insertion: .opacity.combined(with: .offset(y: 5)),
+                            removal: .opacity
+                        ))
+                }
+
+                Spacer(minLength: 8)
+
+                if nearLimit {
+                    meter
+                        .transition(.opacity.combined(with: .scale(scale: 0.92, anchor: .trailing)))
+                }
+            }
+            .padding(.top, 10)
+            .frame(minHeight: 20)
+            .animation(Springs.standard, value: showLimitWhisper)
+            .animation(Springs.standard, value: nearLimit)
+        }
+        .onChange(of: text) { _, newValue in
+            if newValue.count < maxCharacters {
+                didAnnounceLimit = false
+                withAnimation(Springs.standard) { showLimitWhisper = false }
+            }
+        }
+        .accessibilityElement(children: .contain)
+        .accessibilityHint(atLimit
+                           ? "Limit reached, \(maxCharacters) characters"
+                           : "\(remaining) characters remaining")
+    }
+
+    /// Countdown, not a fraction — quieter, more intentional.
+    private var meter: some View {
+        HStack(spacing: 6) {
+            if atLimit {
+                Circle()
+                    .fill(hue.opacity(0.9))
+                    .frame(width: 4, height: 4)
+                    .shadow(color: hue.opacity(0.7), radius: 3)
+            }
+            Text(atLimit ? "Set" : "\(remaining)")
+                .font(.system(size: 11, weight: .semibold, design: .rounded))
+                .monospacedDigit()
+                .foregroundStyle(atLimit ? hue : Ink.textTertiary)
+                .contentTransition(.numericText(value: Double(remaining)))
+        }
+        .accessibilityLabel(atLimit ? "Character limit reached" : "\(remaining) characters left")
+    }
+
+    private func announceLimit() {
+        guard !didAnnounceLimit else { return }
+        didAnnounceLimit = true
+        Haptics.shared.tick()
+        withAnimation(Springs.standard) { showLimitWhisper = true }
+        // A single soft settle on the field — not a shake.
+        limitPulse = true
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.18) {
+            limitPulse = false
         }
     }
 }
@@ -79,9 +211,16 @@ struct NameStep: View {
                 question: "Name the pattern.",
                 whisper: "Short and honest — the way you'd describe it to yourself. “Road rage.” “Doomscrolling.” “Snapping at the kids.”"
             )
-            InkField(placeholder: "Road rage",
-                     text: $draft.name, hue: draft.hue.color,
-                     focusOnAppear: true)
+
+            LimitedInkField(
+                placeholder: "Road rage",
+                text: $draft.name,
+                hue: draft.hue.color,
+                maxCharacters: Metrics.nameMaxLength,
+                whisper: "A name, not a sentence.",
+                singleLine: true,
+                focusOnAppear: true
+            )
         }
         .padding(.top, 24)
     }
@@ -98,9 +237,15 @@ struct StimulusStep: View {
                 question: "What sets it off?",
                 whisper: "The trigger, as a scene you can picture. You'll rehearse summoning this moment on purpose."
             )
-            InkField(placeholder: "Someone cuts me off in traffic",
-                     text: $draft.stimulus, hue: draft.hue.color,
-                     focusOnAppear: true)
+
+            LimitedInkField(
+                placeholder: "Someone cuts me off in traffic",
+                text: $draft.stimulus,
+                hue: draft.hue.color,
+                maxCharacters: Metrics.stimulusMaxLength,
+                whisper: "Brief enough to summarize in a single breath.",
+                focusOnAppear: true
+            )
         }
         .padding(.top, 24)
     }
@@ -113,29 +258,50 @@ struct OldReactionStep: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 32) {
+            VStack(alignment: .leading, spacing: 28) {
                 StepPrompt(
                     question: "What happens now?",
-                    whisper: "Capture the old reaction so you can catch it in the act."
+                    whisper: "Capture the old reaction for your record — so you can recognize it later. It won’t be practiced in training."
                 )
-                labeledField("I feel…", placeholder: "A hot flash of anger",
-                             text: $draft.oldFeelings)
-                labeledField("I think…", placeholder: "“They did that on purpose.”",
-                             text: $draft.oldThoughts)
-                labeledField("I do…", placeholder: "Tailgate, mutter, grip the wheel",
-                             text: $draft.oldBehavior)
+
+                labeledLimited(
+                    "I feel…",
+                    placeholder: "A hot flash of anger",
+                    text: $draft.oldFeelings,
+                    whisper: "Name the feeling."
+                )
+                labeledLimited(
+                    "I think…",
+                    placeholder: "“They did that on purpose.”",
+                    text: $draft.oldThoughts,
+                    whisper: "One thought."
+                )
+                labeledLimited(
+                    "I do…",
+                    placeholder: "Tailgate, mutter, grip the wheel",
+                    text: $draft.oldBehavior,
+                    whisper: "Just the action."
+                )
             }
             .padding(.top, 24)
+            .padding(.bottom, 8)
         }
         .scrollIndicators(.hidden)
         .scrollDismissesKeyboard(.interactively)
     }
 
-    private func labeledField(_ label: String, placeholder: String,
-                              text: Binding<String>) -> some View {
+    private func labeledLimited(_ label: String, placeholder: String,
+                                text: Binding<String>, whisper: String) -> some View {
         VStack(alignment: .leading, spacing: 12) {
             TrackedLabel(text: label, size: 11, color: draft.hue.color.opacity(0.9))
-            InkField(placeholder: placeholder, text: text, hue: draft.hue.color)
+            LimitedInkField(
+                placeholder: placeholder,
+                text: text,
+                hue: draft.hue.color,
+                maxCharacters: Metrics.reactionMaxLength,
+                whisper: whisper,
+                singleLine: true
+            )
         }
     }
 }
