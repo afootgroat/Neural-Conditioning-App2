@@ -109,52 +109,61 @@ static inline float fbm(float2 p) {
 
     // Idle breath: 6 breaths/min. Charge swells the whole body.
     float breath = 1.0 + breathe * 0.035 * sin(time * 0.6283);
-    float body = (0.62 + charge * 0.16) * breath;
+    float body = (0.60 + charge * 0.17) * breath;
 
     // Plasma interior — domain-warped fbm, seeded per rep.
-    float2 pp = uv * (2.6 - charge * 0.7);
+    float2 pp = uv * (2.8 - charge * 0.8);
     float2 warp = float2(fbm(pp + seed * 3.7 + time * 0.11),
                          fbm(pp - seed * 2.9 - time * 0.13));
-    float plasma = fbm(pp + warp * (1.1 + charge * 1.4) + float2(seed, -seed));
+    float plasma = fbm(pp + warp * (1.2 + charge * 1.5) + float2(seed, -seed));
 
-    // Filaments sharpen as charge builds — the synapse gathering itself.
+    // Ridged veins — the bright filament network in the interior.
+    float veins = pow(clamp(1.0 - abs(2.0 * plasma - 1.0) * 1.35, 0.0, 1.0), 3.0);
+
+    // Angular filaments sharpen as charge builds — the synapse gathering itself.
     float filaments = sin(angle * 6.0 + plasma * (6.0 + charge * 10.0)
                           + time * 0.8 + seed * 6.28);
-    filaments = pow(max(0.0, filaments), 3.0) * charge * 0.5;
+    filaments = pow(max(0.0, filaments), 3.0) * charge * 0.45;
 
     // Core disc with a breathing soft edge.
-    float edge = 0.10 + 0.10 * plasma;
-    float disc = 1.0 - smoothstep(body - edge, body + edge * 0.6, r);
+    float edge = 0.05 + 0.06 * plasma;
+    float disc = 1.0 - smoothstep(body - edge, body + edge * 0.5, r);
 
-    // Rim: thin bright ring that intensifies with charge.
-    float rim = exp(-pow((r - body) * (9.0 - charge * 3.0), 2.0));
-    rim *= 0.55 + charge * 0.9;
+    // Limb darkening gives the disc volume.
+    float limb = smoothstep(body * 1.02, body * 0.25, r);
 
-    // Outer halo, very soft.
-    float halo = exp(-r * (3.4 - charge * 1.1)) * (0.16 + charge * 0.22);
+    // Crisp rim that intensifies with charge; soft halo only outside the body.
+    float rim = exp(-pow((r - body) * (15.0 - charge * 5.0), 2.0)) * (0.7 + charge * 0.9);
+    float halo = exp(-max(0.0, r - body) * (4.5 - charge * 1.6)) * (0.10 + charge * 0.30);
 
-    // Fire: expanding shockwave ring + whole-body flash.
-    float fireR = (1.0 - fire) * 1.65;
-    float shock = exp(-pow((r - fireR) * 7.0, 2.0)) * fire * 1.6;
-    float flash = fire * fire * disc * 1.2;
+    // Fire: an instant flash pop, then a shock ring that visibly leaves the body.
+    float shockR = (1.0 - fire) * 1.8;
+    float shockStrength = pow(max(0.0, fire * (1.0 - fire)) * 4.0, 1.6) * 0.9;
+    float shock = exp(-pow((r - shockR) * 7.5, 2.0)) * shockStrength;
+    float flash = pow(fire, 6.0) * disc * 1.3;
 
-    // Hue morph between stages; interior varies between deep & bright.
+    // Hue morph between stages; interior runs deep → mid → veined bright.
     float3 cA = float3(hueA.rgb);
     float3 cB = float3(hueB.rgb);
     float3 hue = mix(cA, cB, smoothstep(0.0, 1.0, crossfade));
-    float3 deep = hue * 0.22;
-    float3 bright = hue + float3(0.25, 0.22, 0.2) * (0.4 + charge);
+    float3 deep = hue * 0.12;
+    float3 mid = hue * 0.40;
+    float3 bright = hue + float3(0.30, 0.26, 0.22) * (0.30 + charge * 0.9);
 
-    float interior = plasma * (0.55 + charge * 0.75) + filaments;
-    float3 c = mix(deep, bright, clamp(interior, 0.0, 1.0)) * disc;
+    float3 c = mix(deep, mid, clamp(plasma * 1.25, 0.0, 1.0));
+    c = mix(c, bright, clamp(veins * (0.30 + charge * 0.9) + filaments, 0.0, 1.0));
+    c *= 0.35 + 0.65 * limb;
+    c += hue * exp(-r * r / max(body * body * 0.16, 1e-4)) * (0.12 + charge * 0.55);
+    c *= disc;
     c += hue * rim;
     c += hue * halo;
     c += (hue * 0.7 + 0.3) * shock;
     c += float3(1.0, 0.98, 0.94) * flash;
 
-    // Premultiplied output; alpha carries the soft silhouette + effects.
+    // Premultiplied output: `c` is already the emitted light; alpha carries
+    // the soft silhouette + effects (matches the audited GLSL compositing).
     float a = clamp(disc + rim * 0.9 + halo + shock, 0.0, 1.0);
-    return half4(half3(c), 1.0h) * half(a);
+    return half4(half3(min(c, 1.0)), half(a));
 }
 
 // MARK: - Ripple --------------------------------------------------------------
@@ -198,8 +207,9 @@ static inline float fbm(float2 p) {
 
 // MARK: - Weave ---------------------------------------------------------------
 //
-// Maturity-advancement celebration: two interfering line fields that braid
-// into a bright lattice, then dissolve. `progress` 0→1 over ~2.4s.
+// Maturity-advancement celebration: luminous strands braiding around the
+// vertical axis; they draw together as the new stage seals. `progress`
+// 0→1 over ~2.8s.
 
 [[ stitchable ]] half4 weave(float2 position,
                              half4 color,
@@ -213,24 +223,32 @@ static inline float fbm(float2 p) {
     float rise = smoothstep(0.0, 0.18, progress);
     float fall = 1.0 - smoothstep(0.55, 1.0, progress);
     float env = rise * fall;
+    if (env < 0.003) { return half4(0.0h); }
 
-    float drift = time * 0.35 + progress * 2.0;
-    float n = fbm(uv * 3.0 + drift * 0.2);
-
-    // Two thread fields at opposing angles, warped by noise.
-    float f1 = sin((uv.x * 0.9 + uv.y * 0.42) * 34.0 + n * 5.0 + drift);
-    float f2 = sin((uv.x * -0.5 + uv.y * 0.95) * 30.0 - n * 4.0 - drift * 1.2);
-
-    float threads = pow(max(0.0, f1), 6.0) + pow(max(0.0, f2), 6.0);
-    float lattice = pow(max(0.0, f1 * f2), 3.0) * 2.2;
-
-    // Radial mask keeps energy centered, with noise-torn edges.
-    float mask = 1.0 - smoothstep(0.15, 0.75 + n * 0.2, length(uv));
-
+    float t = time * 0.4 + progress * 3.0;
     float3 tintRGB = float3(tint.rgb);
-    float3 c = tintRGB * (threads * 0.5 + lattice) * mask * env;
-    c += float3(1.0, 0.97, 0.9) * lattice * mask * env * 0.35;
+    float3 acc = float3(0.0);
 
-    float a = clamp((threads * 0.4 + lattice) * mask * env, 0.0, 1.0);
-    return half4(half3(c), 1.0h) * half(a * 0.85);
+    for (int i = 0; i < 6; i++) {
+        float fi = float(i);
+        float phase = fi * 1.047 + t;
+        float amp = (0.34 + 0.10 * sin(fi * 2.3 + t * 0.7)) * (1.0 - 0.45 * progress);
+        float x = sin(uv.y * (2.2 + fi * 0.23) + phase) * amp;
+        x += (fbm(float2(uv.y * 1.7, fi * 7.0 + t * 0.3)) - 0.5) * 0.25;
+        float d = abs(uv.x - x);
+        float core = exp(-d * d * 2200.0);
+        float glow = exp(-d * d * 90.0) * 0.35;
+        float shimmer = 0.55 + 0.45 * sin(phase * 1.7 + uv.y * 3.0);
+        acc += (tintRGB * (0.55 + 0.45 * shimmer) + float3(0.5) * core * 0.5)
+               * (core + glow);
+    }
+
+    // Dissolve near top/bottom; breathe room for the stage title at center.
+    float vmask = smoothstep(1.05, 0.55, abs(uv.y));
+    float titleDim = 1.0 - 0.55 * exp(-pow(uv.y * 2.6, 2.0));
+    float3 c = acc * env * vmask * titleDim * 0.55;
+
+    // Premultiplied: `c` is the emitted light; alpha from its luminance.
+    float a = clamp(max(c.r, max(c.g, c.b)) * 1.4, 0.0, 1.0);
+    return half4(half3(min(c, 1.0)), half(a));
 }

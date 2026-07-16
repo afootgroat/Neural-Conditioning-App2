@@ -1,0 +1,1126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Rewire — design audit prototype</title>
+<style>
+  :root {
+    --ink: #07070C;
+    --ink-raised: rgba(16,16,24,0.72);
+    --text-1: #F4F2EC;
+    --text-2: #8E8E9E;
+    --text-3: #55555F;
+    --hairline: rgba(255,255,255,0.08);
+    --trigger: #FF5C39;
+    --notice: #FFC24B;
+    --accept: #3EDDC5;
+    --choose: #8B7BFF;
+    --ui: "SF Pro Text", -apple-system, "Segoe UI", system-ui, sans-serif;
+    --voice: "New York", "Iowan Old Style", Georgia, serif;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-font-smoothing: antialiased; }
+  html, body { background: #17171d; height: 100%; font-family: var(--ui); }
+  #stage-wrap { display: flex; align-items: center; justify-content: center; gap: 28px; min-height: 100vh; padding: 24px; }
+
+  /* ------- phone frame ------- */
+  #phone {
+    position: relative; width: 390px; height: 844px; background: var(--ink);
+    border-radius: 54px; overflow: hidden; flex: none;
+    box-shadow: 0 0 0 10px #000, 0 0 0 12px #2a2a30, 0 40px 90px rgba(0,0,0,0.6);
+  }
+  #island {
+    position: absolute; top: 12px; left: 50%; transform: translateX(-50%);
+    width: 118px; height: 34px; background: #000; border-radius: 20px; z-index: 60;
+  }
+  #gl { position: absolute; inset: 0; width: 100%; height: 100%; }
+
+  .screen { position: absolute; inset: 0; display: none; z-index: 10; }
+  .screen.active { display: block; }
+
+  /* ------- shared ------- */
+  .tracked { text-transform: uppercase; letter-spacing: 0.14em; font-weight: 600; }
+  .glass {
+    background: linear-gradient(rgba(255,255,255,0.02), rgba(255,255,255,0.00)), var(--ink-raised);
+    backdrop-filter: blur(24px);
+    border-radius: 28px;
+    border: 1px solid transparent;
+    background-clip: padding-box;
+    position: relative;
+  }
+  .glass::before {
+    content: ""; position: absolute; inset: 0; border-radius: 28px; padding: 1px;
+    background: linear-gradient(rgba(255,255,255,0.14), rgba(255,255,255,0.03));
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor; mask-composite: exclude; pointer-events: none;
+  }
+  .icon-btn {
+    width: 44px; height: 44px; border-radius: 50%; background: rgba(255,255,255,0.06);
+    border: none; color: var(--text-2); font-size: 15px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: transform 0.15s cubic-bezier(0.3,1.4,0.6,1);
+  }
+  .icon-btn:active { transform: scale(0.92); }
+  .mono { font-variant-numeric: tabular-nums; }
+
+  /* ------- home ------- */
+  #home .content { position: absolute; inset: 0; padding: 74px 24px 0; overflow-y: auto; scrollbar-width: none; }
+  #home h1 { font-family: var(--voice); font-size: 30px; font-weight: 500; color: var(--text-1); }
+  #home .sub { font-size: 13px; color: var(--text-2); margin-top: 6px; font-weight: 500; }
+  #home .head-row { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 28px; }
+  #stats { display: flex; padding: 18px 22px; margin-bottom: 28px; }
+  #stats .stat { flex: 1; }
+  #stats .stat .v { font-size: 26px; font-weight: 700; color: var(--text-1); font-family: var(--ui); }
+  #stats .stat .l { font-size: 10px; color: var(--text-3); margin-top: 4px; }
+  #stats .sep { width: 1px; height: 30px; background: var(--hairline); margin: auto 18px auto 0; }
+  .card { padding: 20px; margin-bottom: 14px; cursor: pointer; transition: transform 0.2s cubic-bezier(0.3,1.4,0.6,1); }
+  .card:active { transform: scale(0.98); }
+  .card .row1 { display: flex; justify-content: space-between; align-items: baseline; }
+  .card .name { font-size: 19px; font-weight: 600; color: var(--text-1); }
+  .card .spark { font-size: 12px; display: flex; gap: 5px; align-items: center; }
+  .card .row2 { display: flex; justify-content: space-between; margin: 16px 0; align-items: center; }
+  .card .stage-l { font-size: 10px; }
+  .card .togo { font-size: 11px; color: var(--text-3); font-weight: 500; }
+  .thread { position: relative; height: 3px; border-radius: 2px; background: rgba(255,255,255,0.08); }
+  .thread .fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 2px; }
+  .thread .head { position: absolute; top: -0.5px; width: 4px; height: 4px; border-radius: 50%; background: #fff; }
+  #new-pathway {
+    position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%); z-index: 20;
+    height: 50px; padding: 0 22px; border-radius: 25px; border: none; cursor: pointer;
+    background: var(--text-1); color: var(--ink); font-family: var(--ui);
+    font-size: 15px; font-weight: 600; box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+    transition: transform 0.15s cubic-bezier(0.3,1.4,0.6,1);
+  }
+  #new-pathway:active { transform: translateX(-50%) scale(0.94); }
+
+  /* ------- training ------- */
+  #training .header {
+    position: absolute; top: 62px; left: 24px; right: 24px; display: flex;
+    justify-content: space-between; align-items: center; z-index: 20;
+  }
+  #training .title { text-align: center; }
+  #training .title .n { font-size: 15px; font-weight: 600; color: var(--text-1); }
+  #training .title .m { font-size: 10px; margin-top: 3px; }
+  #stage-label { position: absolute; top: 176px; left: 0; right: 0; text-align: center; z-index: 20; pointer-events: none; transition: opacity 0.35s; }
+  #training.cue-open #stage-label, #training.cue-open #counters, #training.cue-open .header,
+  #training.celebrating #stage-label, #training.celebrating #counters, #training.celebrating .header { opacity: 0; }
+  #counters, #training .header { transition: opacity 0.35s; }
+  #stage-name { font-size: 15px; font-weight: 700; }
+  #stage-hint { font-family: var(--voice); font-size: 17px; color: var(--text-2); margin-top: 10px; }
+  .stage-swap { animation: stageIn 0.45s cubic-bezier(0.25,1.2,0.45,1); }
+  @keyframes stageIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+  #orb-hit {
+    position: absolute; left: 50%; top: 52%; width: 340px; height: 340px; z-index: 15;
+    transform: translate(-50%, -50%); border-radius: 50%; cursor: pointer;
+  }
+  #counters { position: absolute; bottom: 64px; left: 0; right: 0; text-align: center; z-index: 20; pointer-events: none; }
+  #counters .row { display: flex; justify-content: center; gap: 28px; align-items: center; }
+  #counters .c .v { font-size: 24px; font-weight: 700; color: var(--text-1); }
+  #counters .c .l { font-size: 9px; margin-top: 4px; }
+  #counters .sep { width: 1px; height: 26px; background: var(--hairline); }
+  #next-stage { font-size: 12px; color: var(--text-3); margin-top: 14px; font-weight: 500; }
+
+  /* cue overlay */
+  #cue {
+    position: absolute; inset: 0; z-index: 40; display: none;
+    background: linear-gradient(rgba(7,7,12,0.55), rgba(7,7,12,0.88) 45%, rgba(7,7,12,0.55));
+    align-items: center; justify-content: center; text-align: center; pointer-events: none;
+  }
+  #cue.visible { display: flex; animation: cueIn 0.4s cubic-bezier(0.25,1.1,0.4,1); }
+  @keyframes cueIn { from { opacity: 0; transform: scale(1.02); } to { opacity: 1; transform: none; } }
+  #cue .inner { padding: 0 40px; max-width: 480px; }
+  #cue .stage-tag { font-size: 12px; margin-bottom: 22px; }
+  #cue .big { font-family: var(--voice); font-size: 24px; color: var(--text-1); line-height: 1.4; }
+  #cue .whisper { font-family: var(--voice); font-size: 15px; color: var(--text-2); margin-top: 14px; }
+  #cue .cue-row { text-align: left; margin-bottom: 18px; }
+  #cue .cue-row .l { font-size: 10px; margin-bottom: 4px; }
+  #cue .cue-row .t { font-family: var(--voice); font-size: 19px; color: var(--text-1); }
+
+  /* weave celebration */
+  #weave-overlay {
+    position: absolute; inset: 0; z-index: 50; display: none; text-align: center;
+    align-items: center; justify-content: center; background: rgba(7,7,12,0.6);
+  }
+  #weave-overlay.visible { display: flex; }
+  #weave-overlay .tag { font-size: 11px; color: var(--text-2); margin-bottom: 16px; }
+  #weave-overlay .name { font-family: var(--voice); font-size: 38px; font-weight: 500; color: var(--text-1); }
+  #weave-overlay .meaning { font-family: var(--voice); font-size: 16px; color: var(--text-2); margin-top: 16px; }
+  #weave-overlay .reveal { opacity: 0; filter: blur(6px); transform: scale(0.96); transition: all 0.7s cubic-bezier(0.25,1,0.4,1) 0.35s; }
+  #weave-overlay.visible .reveal { opacity: 1; filter: none; transform: none; }
+
+  /* ------- wizard ------- */
+  #wizard .content { position: absolute; inset: 0; padding: 62px 24px 0; display: flex; flex-direction: column; }
+  #wizard .chrome { display: flex; align-items: center; justify-content: space-between; padding-bottom: 20px; }
+  #dots { display: flex; gap: 8px; }
+  #dots .dot { width: 6px; height: 6px; border-radius: 3px; background: rgba(255,255,255,0.15); transition: all 0.3s cubic-bezier(0.3,1.3,0.5,1); }
+  #dots .dot.on { width: 20px; }
+  #wstep-host { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+  .wstep { flex: 1; overflow-y: auto; scrollbar-width: none; padding-top: 24px; animation: stepIn 0.45s cubic-bezier(0.25,1.1,0.45,1); }
+  @keyframes stepIn { from { opacity: 0; transform: translateX(40px); } to { opacity: 1; transform: none; } }
+  .wstep.back { animation: stepBack 0.45s cubic-bezier(0.25,1.1,0.45,1); }
+  @keyframes stepBack { from { opacity: 0; transform: translateX(-40px); } to { opacity: 1; transform: none; } }
+  .wq { font-family: var(--voice); font-size: 28px; font-weight: 500; color: var(--text-1); line-height: 1.25; }
+  .ww { font-size: 13px; color: var(--text-2); margin-top: 10px; line-height: 1.5; }
+  .ink-field { margin-top: 36px; }
+  .ink-field input, .ink-field textarea {
+    width: 100%; background: none; border: none; outline: none; resize: none;
+    font-family: var(--voice); font-size: 20px; color: var(--text-1); padding-bottom: 10px;
+  }
+  .ink-field input::placeholder, .ink-field textarea::placeholder { color: var(--text-3); }
+  .ink-field .line { height: 1px; background: var(--hairline); transition: background 0.25s; }
+  .ink-field.focus .line { background: color-mix(in srgb, var(--hue) 70%, transparent); }
+  .flabel { font-size: 11px; margin-bottom: 12px; margin-top: 30px; }
+  #emotion-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 28px; }
+  .echip {
+    display: flex; align-items: center; gap: 9px; height: 52px; padding: 0 16px;
+    border-radius: 18px; background: rgba(255,255,255,0.04); border: 1px solid var(--hairline);
+    color: var(--text-2); font-size: 15px; font-weight: 500; cursor: pointer; font-family: var(--ui);
+    transition: all 0.25s cubic-bezier(0.3,1.2,0.5,1);
+  }
+  .echip .dot { width: 8px; height: 8px; border-radius: 4px; flex: none; }
+  .echip.sel { color: var(--text-1); }
+  .echip:active { transform: scale(0.96); }
+  .mrow {
+    display: flex; justify-content: space-between; align-items: center; gap: 12px;
+    padding: 15px 18px; border-radius: 18px; background: rgba(255,255,255,0.03);
+    border: 1px solid var(--hairline); margin-bottom: 10px; cursor: pointer;
+    font-family: var(--voice); font-size: 17px; color: var(--text-2); text-align: left;
+    transition: all 0.25s;
+  }
+  .mrow.sel { color: var(--text-1); }
+  .mrow .chk { font-size: 12px; opacity: 0; transform: scale(0.5); transition: all 0.25s; }
+  .mrow.sel .chk { opacity: 1; transform: none; }
+  #wfooter { padding: 12px 0 40px; }
+  .glow-btn {
+    width: 100%; height: 54px; border-radius: 27px; border: none; cursor: pointer;
+    font-family: var(--ui); font-size: 16px; font-weight: 600; color: var(--ink);
+    transition: transform 0.15s cubic-bezier(0.3,1.4,0.6,1), opacity 0.2s;
+  }
+  .glow-btn:active { transform: scale(0.96); }
+  .glow-btn:disabled { opacity: 0.35; cursor: default; }
+
+  /* blueprint */
+  .bp-card { padding: 24px; margin-top: 28px; }
+  .bp-row { display: flex; gap: 16px; }
+  .bp-rail { width: 8px; display: flex; flex-direction: column; align-items: center; }
+  .bp-dot { width: 7px; height: 7px; border-radius: 4px; margin-top: 5px; flex: none; }
+  .bp-line { width: 1px; flex: 1; background: var(--hairline); margin: 4px 0; }
+  .bp-body { flex: 1; padding-bottom: 24px; }
+  .bp-row:last-child .bp-body { padding-bottom: 0; }
+  .bp-l { font-size: 10px; margin-bottom: 6px; }
+  .bp-t { font-family: var(--voice); font-size: 18px; color: var(--text-1); line-height: 1.4; }
+  .bp-t .v { color: var(--text-3); font-size: 15px; }
+  .privacy { display: flex; gap: 8px; justify-content: center; align-items: center; font-size: 12px; color: var(--text-3); margin-top: 24px; }
+
+  /* ------- archive sheet ------- */
+  #archive {
+    position: absolute; left: 0; right: 0; bottom: 0; top: 30%; z-index: 45; display: none;
+    background: rgba(24,24,32,0.85); backdrop-filter: blur(30px);
+    border-radius: 32px 32px 0 0; padding: 28px 24px;
+  }
+  #archive.visible { display: block; animation: sheetUp 0.5s cubic-bezier(0.25,1.1,0.4,1); }
+  @keyframes sheetUp { from { transform: translateY(60%); opacity: 0.5; } to { transform: none; opacity: 1; } }
+  #archive h2 { font-family: var(--voice); font-size: 26px; font-weight: 500; color: var(--text-1); }
+  #archive .sub { font-size: 13px; color: var(--text-2); margin: 4px 0 20px; }
+  .rest-card { display: flex; align-items: center; gap: 14px; padding: 14px 18px; border-radius: 22px; margin-bottom: 12px; }
+  .rest-card .name { font-size: 16px; font-weight: 600; color: var(--text-2); }
+  .rest-card .meta { font-size: 12px; color: var(--text-3); margin-top: 3px; }
+
+  /* ------- debug panel ------- */
+  #debug {
+    width: 300px; color: #cfcfd6; font-size: 12px; flex: none;
+    background: #1e1e26; border-radius: 16px; padding: 18px;
+  }
+  #debug h3 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.1em; color: #8a8a96; margin: 14px 0 8px; }
+  #debug h3:first-child { margin-top: 0; }
+  #debug button { background: #2c2c38; color: #dcdce4; border: none; border-radius: 8px; padding: 7px 10px; margin: 0 6px 6px 0; cursor: pointer; font-size: 12px; }
+  #debug button:hover { background: #3a3a4a; }
+  #debug label { display: block; margin: 6px 0 2px; color: #8a8a96; }
+  #debug input[type=range] { width: 100%; }
+  #debug .val { color: #fff; }
+</style>
+</head>
+<body>
+<div id="stage-wrap">
+  <div id="phone">
+    <canvas id="gl"></canvas>
+    <div id="island"></div>
+
+    <!-- HOME -->
+    <div class="screen active" id="home">
+      <div class="content">
+        <div class="head-row">
+          <div>
+            <h1 id="greeting">Good evening.</h1>
+            <div class="sub" id="home-sub"></div>
+          </div>
+          <button class="icon-btn" id="btn-archive" title="Resting pathways">☾</button>
+        </div>
+        <div class="glass" id="stats"></div>
+        <div id="cards"></div>
+        <div style="height:110px"></div>
+      </div>
+      <button id="new-pathway">＋&ensp;New pathway</button>
+    </div>
+
+    <!-- TRAINING -->
+    <div class="screen" id="training">
+      <div class="header">
+        <button class="icon-btn" id="btn-close-training">⌄</button>
+        <div class="title">
+          <div class="n" id="t-name"></div>
+          <div class="m tracked" id="t-maturity"></div>
+        </div>
+        <div style="width:44px"></div>
+      </div>
+      <div id="stage-label">
+        <div id="stage-name" class="tracked"></div>
+        <div id="stage-hint"></div>
+      </div>
+      <!-- maturity arc around the orb (SwiftUI Circle.trim parity) -->
+      <svg id="arc" width="390" height="844" style="position:absolute;inset:0;pointer-events:none;z-index:12">
+        <circle cx="195" cy="438.9" r="166" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="2"/>
+        <circle id="arc-fill" cx="195" cy="438.9" r="166" fill="none" stroke-width="2"
+                stroke-linecap="round" transform="rotate(-90 195 438.9)"
+                style="filter: drop-shadow(0 0 4px currentColor)"/>
+      </svg>
+      <div id="orb-hit"></div>
+      <div id="counters">
+        <div class="row">
+          <div class="c"><div class="v mono" id="c-today">0</div><div class="l tracked" style="color:var(--text-3)">Today</div></div>
+          <div class="sep"></div>
+          <div class="c"><div class="v mono" id="c-life">0</div><div class="l tracked" style="color:var(--text-3)">Lifetime</div></div>
+        </div>
+        <div id="next-stage" class="mono"></div>
+      </div>
+      <div id="cue"><div class="inner" id="cue-inner"></div></div>
+      <div id="weave-overlay">
+        <div>
+          <div class="tag tracked reveal">New stage</div>
+          <div class="name reveal" id="w-name"></div>
+          <div class="meaning reveal" id="w-meaning"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- WIZARD -->
+    <div class="screen" id="wizard">
+      <div class="content">
+        <div class="chrome">
+          <button class="icon-btn" id="btn-wizard-back">✕</button>
+          <div id="dots"></div>
+          <div style="width:44px"></div>
+        </div>
+        <div id="wstep-host"></div>
+        <div id="wfooter"><button class="glow-btn" id="btn-continue">Continue</button></div>
+      </div>
+    </div>
+
+    <!-- ARCHIVE -->
+    <div id="archive">
+      <h2>Resting</h2>
+      <div class="sub">Pathways you've set down. They remember everything.</div>
+      <div id="rest-list"></div>
+    </div>
+  </div>
+
+  <!-- DEBUG -->
+  <div id="debug">
+    <h3>Screens</h3>
+    <button data-scr="home">Home</button>
+    <button data-scr="training">Training</button>
+    <button data-scr="wizard">Wizard</button>
+    <button id="dbg-archive">Archive</button>
+    <h3>Moments</h3>
+    <button id="dbg-fire">Fire rep</button>
+    <button id="dbg-weave">Celebrate</button>
+    <button id="dbg-cue">Toggle cue</button>
+    <h3>Time</h3>
+    <label><input type="checkbox" id="dbg-pause"> pause clock</label>
+    <label>scrub fire <span class="val" id="fire-val">–</span></label>
+    <input type="range" id="dbg-fire-scrub" min="0" max="1" step="0.01" value="0">
+    <label>charge override <span class="val" id="charge-val">auto</span></label>
+    <input type="range" id="dbg-charge" min="-0.01" max="1" step="0.01" value="-0.01">
+    <h3>State</h3>
+    <div id="dbg-state" style="line-height:1.7"></div>
+  </div>
+</div>
+
+<script>
+"use strict";
+/* =========================================================================
+   Shared design data (mirrors Swift models)
+   ========================================================================= */
+const STAGES = [
+  { key: "trigger", title: "Trigger", hint: "Summon the moment", color: [1.0, 0.36, 0.224], css: "var(--trigger)", hex: "#FF5C39" },
+  { key: "notice",  title: "Notice",  hint: "See it happening",  color: [1.0, 0.76, 0.294], css: "var(--notice)",  hex: "#FFC24B" },
+  { key: "accept",  title: "Accept",  hint: "Let it be here",    color: [0.243, 0.867, 0.773], css: "var(--accept)", hex: "#3EDDC5" },
+  { key: "choose",  title: "Choose",  hint: "Take the new path", color: [0.545, 0.482, 1.0],  css: "var(--choose)",  hex: "#8B7BFF" },
+];
+const MATURITY = [
+  { title: "Disruption", threshold: 0, meaning: "The pattern is seen." },
+  { title: "Foundation", threshold: 50, meaning: "A new groove begins." },
+  { title: "Strengthening", threshold: 150, meaning: "The groove deepens." },
+  { title: "Stabilizing", threshold: 400, meaning: "The new path is default." },
+  { title: "Enlightenment", threshold: 1000, meaning: "The old pattern is a memory." },
+];
+const HUES = {
+  dawn: "#FF8E72", ember: "#FF5C39", honey: "#FFC24B", moss: "#9BD77A",
+  tide: "#3EDDC5", glacier: "#6FB8FF", iris: "#8B7BFF", orchid: "#D98BF5",
+};
+const EMOTIONS = [
+  { name: "Calm", hue: "tide", mantras: ["This moment is not an emergency.", "I can slow everything down.", "Still water runs beneath this."] },
+  { name: "Compassion", hue: "dawn", mantras: ["They are carrying something too.", "Soft heart, steady hands.", "I can be kind before I am right."] },
+  { name: "Curiosity", hue: "glacier", mantras: ["Interesting — what is really happening here?", "What else could this mean?", "I wonder what I'll do next."] },
+  { name: "Gratitude", hue: "honey", mantras: ["Even this is part of a good life.", "I have more than this moment is taking.", "Thank you, anyway."] },
+  { name: "Patience", hue: "moss", mantras: ["There is time inside this moment.", "Nothing needs to happen yet.", "I move at my own weather."] },
+  { name: "Confidence", hue: "ember", mantras: ["I have handled harder than this.", "My ground does not move.", "I choose my next move."] },
+  { name: "Playfulness", hue: "orchid", mantras: ["This is a strange little game.", "Lightly, lightly.", "I can hold this loosely."] },
+  { name: "Acceptance", hue: "iris", mantras: ["It is allowed to be like this.", "I don't argue with what already is.", "Here is where I begin."] },
+];
+
+const pathways = [
+  { id: 1, name: "Road rage", stimulus: "Someone cuts me off in traffic",
+    feelings: "A hot flash of anger", thoughts: "“They did that on purpose.”", doing: "Tailgate, mutter, grip the wheel",
+    emotion: "Calm", hue: "tide", mantra: "This moment is not an emergency.",
+    lifetime: 147, today: 12 },
+  { id: 2, name: "Doomscrolling", stimulus: "Reaching for my phone in bed",
+    feelings: "Restless, foggy", thoughts: "“Just five minutes.”", doing: "Scroll until my eyes hurt",
+    emotion: "Acceptance", hue: "iris", mantra: "Here is where I begin.",
+    lifetime: 58, today: 0 },
+  { id: 3, name: "Snapping at the kids", stimulus: "Being asked something mid-task",
+    feelings: "A spike of irritation", thoughts: "“Can't I have one minute?”", doing: "Answer sharply, regret it",
+    emotion: "Compassion", hue: "dawn", mantra: "Soft heart, steady hands.",
+    lifetime: 12, today: 3 },
+];
+const archived = [
+  { name: "Nail biting", lifetime: 214, maturity: "Strengthening", hue: "honey" },
+];
+
+/* =========================================================================
+   GLSL — 1:1 ports of Rewire.metal (aurora / orb / ripple / weave)
+   ========================================================================= */
+const VSRC = `attribute vec2 a; void main(){ gl_Position = vec4(a,0.,1.); }`;
+const FSRC = `
+precision highp float;
+uniform vec2 u_res; uniform float u_dpr; uniform float u_time;
+uniform float u_mode;            /* 0 aurora-only, 1 + orb */
+uniform vec3 u_tint; uniform float u_energy;
+uniform vec2 u_orbCenter; uniform float u_orbRadius;
+uniform float u_charge, u_crossfade, u_breathe, u_seed, u_fire;
+uniform vec3 u_hueA, u_hueB;
+uniform float u_rippleP, u_rippleAmp;
+uniform float u_weaveP; uniform vec3 u_weaveTint;
+
+float hash21(vec2 p){ p = fract(p*vec2(234.34,435.345)); p += dot(p,p+34.23); return fract(p.x*p.y); }
+float vnoise(vec2 p){
+  vec2 i=floor(p), f=fract(p); vec2 u=f*f*(3.-2.*f);
+  float a=hash21(i), b=hash21(i+vec2(1.,0.)), c=hash21(i+vec2(0.,1.)), d=hash21(i+vec2(1.,1.));
+  return mix(mix(a,b,u.x), mix(c,d,u.x), u.y);
+}
+float fbm(vec2 p){
+  float v=0., amp=.5; mat2 rot=mat2(.8,.6,-.6,.8);
+  for(int i=0;i<4;i++){ v+=amp*vnoise(p); p=rot*p*2.03+vec2(11.7,5.1); amp*=.5; }
+  return v;
+}
+
+vec3 aurora(vec2 pos){
+  vec2 uv = pos / max(u_res.x, u_res.y);
+  float t = u_time * .045;
+  float n1 = fbm(uv*2.1 + vec2(t*.7, -t*.4));
+  float n2 = fbm(uv*3.3 + vec2(-t*.5, t*.6) + 7.31);
+  float horizon = smoothstep(.1, 1.05, uv.y + n1*.35);
+  vec3 ink = vec3(.027,.027,.047);
+  vec3 coolBase = vec3(.10,.10,.22);
+  float glow = n1*n2; glow = glow*glow*(1.+u_energy*2.2);
+  vec3 c = ink;
+  c += coolBase*glow*.9*horizon;
+  c += u_tint*glow*(.55+u_energy*.8)*horizon;
+  c += (hash21(pos)-.5)*.012;
+  return c;
+}
+
+vec4 orb(vec2 uv){ /* uv in orb space [-1,1] */
+  float r = length(uv);
+  float angle = atan(uv.y, uv.x);
+  float breath = 1. + u_breathe*.035*sin(u_time*.6283);
+  float body = (.60 + u_charge*.17)*breath;
+
+  vec2 pp = uv*(2.8-u_charge*.8);
+  vec2 warp = vec2(fbm(pp+u_seed*3.7+u_time*.11), fbm(pp-u_seed*2.9-u_time*.13));
+  float plasma = fbm(pp + warp*(1.2+u_charge*1.5) + vec2(u_seed,-u_seed));
+
+  /* ridged veins — bright filament network in the interior */
+  float veins = pow(clamp(1.-abs(2.*plasma-1.)*1.35, 0., 1.), 3.);
+
+  /* angular filaments sharpen as charge builds */
+  float fil = sin(angle*6. + plasma*(6.+u_charge*10.) + u_time*.8 + u_seed*6.28);
+  fil = pow(max(0.,fil),3.)*u_charge*.45;
+
+  float edge = .05+.06*plasma;
+  float disc = 1.-smoothstep(body-edge, body+edge*.5, r);
+
+  /* limb darkening — gives the disc volume */
+  float limb = smoothstep(body*1.02, body*.25, r);
+
+  float rim = exp(-pow((r-body)*(15.-u_charge*5.),2.)) * (.7+u_charge*.9);
+  float halo = exp(-max(0., r-body)*(4.5-u_charge*1.6))*(.10+u_charge*.30);
+
+  /* fire: instant flash pop, then a shock ring that visibly leaves the body */
+  float shockR = (1.-u_fire)*1.8;
+  float shockStrength = pow(max(0., u_fire*(1.-u_fire))*4., 1.6)*.9;
+  float shock = exp(-pow((r-shockR)*7.5,2.))*shockStrength;
+  float flash = pow(u_fire, 6.)*disc*1.3;
+
+  vec3 hue = mix(u_hueA, u_hueB, smoothstep(0.,1.,u_crossfade));
+  vec3 deep = hue*.12;
+  vec3 mid  = hue*.40;
+  vec3 bright = hue + vec3(.30,.26,.22)*(.30+u_charge*.9);
+
+  vec3 c = mix(deep, mid, clamp(plasma*1.25, 0., 1.));
+  c = mix(c, bright, clamp(veins*(.30+u_charge*.9) + fil, 0., 1.));
+  c *= (.35+.65*limb);
+  c += hue * exp(-r*r/max(body*body*.16, 1e-4)) * (.12+u_charge*.55);
+  c *= disc;
+  c += hue*rim;
+  c += hue*halo;
+  c += (hue*.7+.3)*shock;
+  c += vec3(1.,.98,.94)*flash;
+
+  float a = clamp(disc + rim*.9 + halo + shock, 0., 1.);
+  return vec4(c, a);
+}
+
+vec3 weave(vec2 pos){
+  /* Luminous strands braiding around the vertical axis; they draw together
+     as the new stage seals. */
+  vec2 uv = (pos-u_res*.5)/min(u_res.x,u_res.y);
+  float rise = smoothstep(0.,.18,u_weaveP);
+  float fall = 1.-smoothstep(.55,1.,u_weaveP);
+  float env = rise*fall;
+  if (env < 0.003) return vec3(0.);
+  float t = u_time*.4 + u_weaveP*3.;
+  vec3 acc = vec3(0.);
+  for (int i=0;i<6;i++){
+    float fi = float(i);
+    float phase = fi*1.047 + t;
+    float amp = (.34 + .10*sin(fi*2.3+t*.7)) * (1.-.45*u_weaveP);
+    float x = sin(uv.y*(2.2+fi*.23) + phase)*amp;
+    x += (fbm(vec2(uv.y*1.7, fi*7.+t*.3))-.5)*.25;
+    float d = abs(uv.x-x);
+    float core = exp(-d*d*2200.);
+    float glow = exp(-d*d*90.)*.35;
+    float shimmer = .55+.45*sin(phase*1.7+uv.y*3.);
+    acc += (u_weaveTint*(.55+.45*shimmer) + vec3(.5)*core*.5)*(core+glow);
+  }
+  float vmask = smoothstep(1.05,.55,abs(uv.y));
+  /* breathe room for the stage title at center */
+  float titleDim = 1. - .55*exp(-pow(uv.y*2.6,2.));
+  return acc*env*vmask*titleDim*.55;
+}
+
+vec3 scene(vec2 pos){
+  vec3 c = aurora(pos);
+  if (u_mode > .5) {
+    vec4 o = orb((pos-u_orbCenter)/u_orbRadius);
+    c = c*(1.-o.a) + o.rgb; /* premultiplied over */
+  }
+  c += weave(pos);
+  return c;
+}
+
+void main(){
+  vec2 pos = vec2(gl_FragCoord.x, (u_res.y*u_dpr) - gl_FragCoord.y) / u_dpr;
+  vec3 c;
+  if (u_rippleAmp > .001) {
+    vec2 center = u_orbCenter;
+    vec2 toC = pos-center; float dist = length(toC);
+    float maxDist = length(u_res);
+    float waveFront = u_rippleP*maxDist*.9;
+    float band = dist-waveFront;
+    float envelope = exp(-band*band/(2.*pow(38.+u_rippleP*90.,2.)));
+    float decay = (1.-u_rippleP);
+    float push = envelope*decay*decay*u_rippleAmp*26.;
+    vec2 dir = dist>.001 ? toC/dist : vec2(0.);
+    vec2 off = dir*push;
+    c = vec3(scene(pos-off*1.25).r, scene(pos-off).g, scene(pos-off*.75).b);
+    c += envelope*decay*.10;
+  } else {
+    c = scene(pos);
+  }
+  gl_FragColor = vec4(c, 1.);
+}
+`;
+
+/* =========================================================================
+   GL setup
+   ========================================================================= */
+const canvas = document.getElementById("gl");
+const gl = canvas.getContext("webgl", { antialias: false, preserveDrawingBuffer: true });
+function compile(type, src) {
+  const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s);
+  if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s));
+  return s;
+}
+const prog = gl.createProgram();
+gl.attachShader(prog, compile(gl.VERTEX_SHADER, VSRC));
+gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, FSRC));
+gl.linkProgram(prog);
+if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(prog));
+gl.useProgram(prog);
+const buf = gl.createBuffer();
+gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 3,-1, -1,3]), gl.STATIC_DRAW);
+const locA = gl.getAttribLocation(prog, "a");
+gl.enableVertexAttribArray(locA);
+gl.vertexAttribPointer(locA, 2, gl.FLOAT, false, 0, 0);
+const U = {};
+["u_res","u_dpr","u_time","u_mode","u_tint","u_energy","u_orbCenter","u_orbRadius",
+ "u_charge","u_crossfade","u_breathe","u_seed","u_fire","u_hueA","u_hueB",
+ "u_rippleP","u_rippleAmp","u_weaveP","u_weaveTint"].forEach(n => U[n] = gl.getUniformLocation(prog, n));
+
+const W = 390, H = 844;
+function resize() {
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  canvas.width = W * dpr; canvas.height = H * dpr;
+  gl.viewport(0, 0, canvas.width, canvas.height);
+  gl.uniform1f(U.u_dpr, dpr);
+  gl.uniform2f(U.u_res, W, H);
+}
+resize();
+
+function hexToRgb(hex) {
+  const n = parseInt(hex.slice(1), 16);
+  return [(n>>16&255)/255, (n>>8&255)/255, (n&255)/255];
+}
+
+/* =========================================================================
+   App state (mirrors TrainingView)
+   ========================================================================= */
+const state = {
+  screen: "home",
+  current: pathways[0],
+  stageIdx: 0, prevStageIdx: 0, stageChangedAt: -1e9,
+  firedAt: null, weaveAt: null, surgeAt: null,
+  holding: false, cueVisible: false,
+  paused: false, fireScrub: 0, chargeOverride: -0.01,
+  wizardStep: 0,
+  draft: null,
+};
+const clock = { t: 0, last: performance.now() };
+
+function maturityFor(reps) {
+  let m = MATURITY[0];
+  for (const s of MATURITY) if (reps >= s.threshold) m = s;
+  return m;
+}
+function nextMaturity(reps) {
+  const idx = MATURITY.indexOf(maturityFor(reps));
+  return MATURITY[idx+1] || null;
+}
+function progressToNext(reps) {
+  const m = maturityFor(reps), n = nextMaturity(reps);
+  if (!n) return 1;
+  return Math.min(1, (reps - m.threshold) / (n.threshold - m.threshold));
+}
+
+const CHARGE = [0.12, 0.40, 0.66, 0.92];
+const HUE_MORPH = 0.55, FIRE_DUR = 1.15;
+const smooth = x => x*x*(3-2*x);
+const clamp01 = x => Math.min(1, Math.max(0, x));
+function overshoot(x) { const c = 1.35, p = x-1; return 1 + p*p*((c+1)*p + c); }
+
+/* =========================================================================
+   Render loop
+   ========================================================================= */
+function render(nowMs) {
+  const dt = (nowMs - clock.last) / 1000; clock.last = nowMs;
+  if (!state.paused) clock.t += dt;
+  const t = clock.t;
+
+  const training = state.screen === "training";
+  const wizard = state.screen === "wizard";
+
+  gl.uniform1f(U.u_time, t);
+  gl.uniform1f(U.u_mode, training ? 1 : 0);
+
+  // aurora tint
+  let tint;
+  if (training) tint = STAGES[state.stageIdx].color;
+  else if (wizard && state.draft) tint = hexToRgb(HUES[state.draft.hue]).map(v => v*0.7);
+  else tint = hexToRgb("#4B4B8F");
+  gl.uniform3f(U.u_tint, tint[0], tint[1], tint[2]);
+
+  // aurora surge (celebrations)
+  let energy = 0;
+  if (state.surgeAt != null) {
+    const x = (t - state.surgeAt) / 2.4;
+    if (x > 0 && x < 1) {
+      const rise = Math.min(1, x/0.15), fall = 1 - Math.max(0, (x-0.15)/0.85);
+      energy = rise * fall * fall;
+    }
+  }
+  gl.uniform1f(U.u_energy, energy);
+
+  // orb
+  const orbCX = W/2, orbCY = H*0.52;
+  gl.uniform2f(U.u_orbCenter, orbCX, orbCY);
+  gl.uniform1f(U.u_orbRadius, 144);
+  const since = t - state.stageChangedAt;
+  const morph = smooth(clamp01(since / HUE_MORPH));
+  const from = CHARGE[state.prevStageIdx], to = CHARGE[state.stageIdx];
+  let charge = from + (to-from)*overshoot(morph) + (state.holding ? 0.05 : 0);
+  if (state.chargeOverride >= 0) charge = state.chargeOverride;
+  gl.uniform1f(U.u_charge, clamp01(charge));
+  gl.uniform1f(U.u_crossfade, morph);
+  const hueA = STAGES[state.prevStageIdx].color, hueB = STAGES[state.stageIdx].color;
+  gl.uniform3f(U.u_hueA, hueA[0], hueA[1], hueA[2]);
+  gl.uniform3f(U.u_hueB, hueB[0], hueB[1], hueB[2]);
+  gl.uniform1f(U.u_breathe, 1);
+  gl.uniform1f(U.u_seed, (state.current.lifetime % 64) + state.stageIdx * 0.13);
+
+  let fire = 0;
+  if (state.fireScrub > 0) fire = 1 - smooth(state.fireScrub);
+  else if (state.firedAt != null) {
+    const x = (t - state.firedAt) / FIRE_DUR;
+    if (x > 0 && x < 1) fire = 1 - smooth(x);
+  }
+  gl.uniform1f(U.u_fire, fire);
+
+  // ripple
+  let rippleP = 0, rippleAmp = 0;
+  const rippleSrc = state.fireScrub > 0 ? state.fireScrub :
+    (state.firedAt != null ? (t - state.firedAt) / FIRE_DUR : -1);
+  if (rippleSrc > 0 && rippleSrc < 1 && training) { rippleP = rippleSrc; rippleAmp = 1; }
+  gl.uniform1f(U.u_rippleP, rippleP);
+  gl.uniform1f(U.u_rippleAmp, rippleAmp);
+
+  // weave
+  let weaveP = 0;
+  if (state.weaveAt != null) {
+    const x = (t - state.weaveAt) / 2.8;
+    if (x > 0 && x < 1) weaveP = x;
+    else if (x >= 1) hideWeave();
+  }
+  gl.uniform1f(U.u_weaveP, weaveP);
+  const wt = hexToRgb(HUES[state.current.hue]);
+  gl.uniform3f(U.u_weaveTint, wt[0], wt[1], wt[2]);
+
+  gl.drawArrays(gl.TRIANGLES, 0, 3);
+  updateDebug(fire, charge);
+  if (!state.frozen) requestAnimationFrame(render);
+}
+/* Deterministic frame control for the design audit. */
+window.REW = {
+  state, clock, showScreen, openWizard, showWeave, advanceStage, renderTraining, renderWizard,
+  freeze(t) {
+    state.frozen = true;
+    if (typeof t === "number") clock.t = t;
+    state.paused = true;
+  },
+  step(dt) { clock.t += (dt || 1/60); clock.last = performance.now(); render(performance.now()); },
+  thaw() { state.frozen = false; state.paused = false; clock.last = performance.now(); requestAnimationFrame(render); },
+  /* Hot-swap the fragment shader during the audit (no page reload needed). */
+  patchShader(fsrc) {
+    const ns = compile(gl.FRAGMENT_SHADER, fsrc);
+    const old = gl.getAttachedShaders(prog).find(s => gl.getShaderParameter(s, gl.SHADER_TYPE) === gl.FRAGMENT_SHADER);
+    gl.detachShader(prog, old); gl.attachShader(prog, ns); gl.linkProgram(prog);
+    if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(prog));
+    gl.useProgram(prog);
+    Object.keys(U).forEach(n => U[n] = gl.getUniformLocation(prog, n));
+    const la = gl.getAttribLocation(prog, "a");
+    gl.enableVertexAttribArray(la); gl.vertexAttribPointer(la, 2, gl.FLOAT, false, 0, 0);
+    resize();
+    return "patched";
+  },
+  FSRC,
+};
+
+/* =========================================================================
+   DOM — Home
+   ========================================================================= */
+function fmtGreeting() {
+  const h = new Date().getHours();
+  return h < 12 && h >= 5 ? "Good morning." : h < 18 ? "Good afternoon." : "Good evening.";
+}
+function renderHome() {
+  document.getElementById("greeting").textContent = fmtGreeting();
+  const practiced = pathways.filter(p => p.today > 0).length;
+  document.getElementById("home-sub").textContent =
+    practiced > 0 ? `You've practiced ${practiced} of ${pathways.length} pathways today.`
+                  : "The mind rewires one rep at a time.";
+  const totalToday = pathways.reduce((s,p) => s+p.today, 0);
+  const totalLife = pathways.reduce((s,p) => s+p.lifetime, 0) + 214;
+  document.getElementById("stats").innerHTML = `
+    <div class="stat"><div class="v mono">${pathways.length}</div><div class="l tracked">Pathways</div></div>
+    <div class="sep"></div>
+    <div class="stat"><div class="v mono">${totalToday}</div><div class="l tracked">Reps today</div></div>
+    <div class="sep"></div>
+    <div class="stat"><div class="v mono">${totalLife}</div><div class="l tracked">Lifetime</div></div>`;
+  const cards = document.getElementById("cards");
+  cards.innerHTML = "";
+  for (const p of pathways) {
+    const hue = HUES[p.hue];
+    const m = maturityFor(p.lifetime), n = nextMaturity(p.lifetime);
+    const prog = progressToNext(p.lifetime);
+    const el = document.createElement("div");
+    el.className = "glass card";
+    el.innerHTML = `
+      <div class="row1">
+        <div class="name">${p.name}</div>
+        <div class="spark" style="color:${p.today>0?hue:"var(--text-3)"}">
+          ${p.today>0 ? `<span class="mono" style="font-weight:600">${p.today}</span><span style="text-shadow:0 0 8px ${hue}">✦</span>` : `<span style="opacity:.6">◌</span>`}
+        </div>
+      </div>
+      <div class="row2">
+        <div class="stage-l tracked" style="color:${hue}">${m.title}</div>
+        <div class="togo mono">${n ? (n.threshold-p.lifetime)+" to go" : "∞"}</div>
+      </div>
+      <div class="thread">
+        <div class="fill" style="width:${Math.max(1.5,prog*100)}%;background:linear-gradient(90deg,${hue}40,${hue});box-shadow:0 0 6px ${hue}b0"></div>
+        <div class="head" style="left:calc(${Math.max(1.5,prog*100)}% - 4px);box-shadow:0 0 8px ${hue}"></div>
+      </div>`;
+    el.onclick = () => openTraining(p);
+    cards.appendChild(el);
+  }
+}
+
+/* =========================================================================
+   DOM — Training
+   ========================================================================= */
+function openTraining(p) {
+  state.current = p;
+  state.stageIdx = 0; state.prevStageIdx = 0;
+  state.stageChangedAt = -1e9; state.firedAt = null;
+  showScreen("training");
+  renderTraining();
+}
+function renderTraining() {
+  const p = state.current;
+  const st = STAGES[state.stageIdx];
+  const hue = HUES[p.hue];
+  document.getElementById("t-name").textContent = p.name;
+  const mat = document.getElementById("t-maturity");
+  mat.textContent = maturityFor(p.lifetime).title;
+  mat.style.color = hue;
+  const sn = document.getElementById("stage-name");
+  sn.textContent = st.title; sn.style.color = st.hex;
+  sn.classList.remove("stage-swap"); void sn.offsetWidth; sn.classList.add("stage-swap");
+  const sh = document.getElementById("stage-hint");
+  sh.textContent = st.hint;
+  sh.classList.remove("stage-swap"); void sh.offsetWidth; sh.classList.add("stage-swap");
+  document.getElementById("c-today").textContent = p.today;
+  document.getElementById("c-life").textContent = p.lifetime;
+  const arc = document.getElementById("arc-fill");
+  const circumference = 2 * Math.PI * 166;
+  arc.setAttribute("stroke", hue + "d9");
+  arc.style.color = hue;
+  arc.setAttribute("stroke-dasharray",
+    `${progressToNext(p.lifetime) * circumference} ${circumference}`);
+  const n = nextMaturity(p.lifetime);
+  document.getElementById("next-stage").textContent =
+    n ? `${n.threshold - p.lifetime} reps to ${n.title}` : MATURITY[4].meaning;
+  renderCue();
+}
+function renderCue() {
+  const p = state.current, st = STAGES[state.stageIdx];
+  const inner = document.getElementById("cue-inner");
+  let body = "";
+  if (st.key === "trigger") body = `
+    <div class="big">${p.stimulus}</div>
+    <div class="whisper">Bring it to mind. Let it feel real.</div>`;
+  else if (st.key === "notice") body = `
+    <div class="cue-row"><div class="l tracked" style="color:${st.hex}e5">Feeling</div><div class="t">${p.feelings}</div></div>
+    <div class="cue-row"><div class="l tracked" style="color:${st.hex}e5">Thinking</div><div class="t">${p.thoughts}</div></div>
+    <div class="cue-row"><div class="l tracked" style="color:${st.hex}e5">Doing</div><div class="t">${p.doing}</div></div>`;
+  else if (st.key === "accept") body = `
+    <div class="big" style="font-size:21px;line-height:1.9">It's already here.<br>You don't have to fix the feeling.<br>Breathe once, and let it be.</div>`;
+  else body = `
+    <div class="l tracked" style="color:${HUES[p.hue]};font-size:11px;margin-bottom:18px">${p.emotion}</div>
+    <div class="big" style="font-size:26px">“${p.mantra}”</div>`;
+  inner.innerHTML = `<div class="stage-tag tracked" style="color:${st.hex}">${st.title}</div>${body}`;
+}
+
+function advanceStage() {
+  if (state.weaveAt != null) return;
+  const completed = state.stageIdx;
+  state.prevStageIdx = state.stageIdx;
+  state.stageIdx = (state.stageIdx + 1) % 4;
+  state.stageChangedAt = clock.t;
+  if (completed === 3) {
+    state.firedAt = clock.t;
+    const p = state.current;
+    const before = maturityFor(p.lifetime);
+    p.lifetime++; p.today++;
+    const after = maturityFor(p.lifetime);
+    if (after !== before) {
+      state.surgeAt = clock.t + 0.45;
+      setTimeout(() => showWeave(after), 450);
+    }
+  }
+  renderTraining();
+}
+function showWeave(m) {
+  state.weaveAt = clock.t;
+  document.getElementById("w-name").textContent = m.title;
+  document.getElementById("w-meaning").textContent = m.meaning;
+  document.getElementById("weave-overlay").classList.add("visible");
+  document.getElementById("training").classList.add("celebrating");
+}
+function hideWeave() {
+  state.weaveAt = null;
+  document.getElementById("weave-overlay").classList.remove("visible");
+  document.getElementById("training").classList.remove("celebrating");
+}
+
+// tap vs long-press on the orb
+const orbHit = document.getElementById("orb-hit");
+let pressTimer = null, longPressed = false;
+orbHit.addEventListener("pointerdown", () => {
+  longPressed = false; state.holding = true;
+  pressTimer = setTimeout(() => {
+    longPressed = true; state.cueVisible = true;
+    document.getElementById("cue").classList.add("visible");
+    document.getElementById("training").classList.add("cue-open");
+  }, 350);
+});
+function endPress(cancelled) {
+  clearTimeout(pressTimer);
+  state.holding = false;
+  if (state.cueVisible) {
+    state.cueVisible = false;
+    document.getElementById("cue").classList.remove("visible");
+    document.getElementById("training").classList.remove("cue-open");
+  } else if (!longPressed && !cancelled) {
+    advanceStage();
+  }
+}
+orbHit.addEventListener("pointerup", () => endPress(false));
+orbHit.addEventListener("pointerleave", () => endPress(true));
+
+/* =========================================================================
+   DOM — Wizard
+   ========================================================================= */
+function openWizard() {
+  state.draft = { name: "", stimulus: "", feelings: "", thoughts: "", doing: "",
+                  emotion: "", hue: "iris", mantra: "", custom: "" };
+  state.wizardStep = 0;
+  showScreen("wizard");
+  renderWizard(true);
+}
+function wizardValid() {
+  const d = state.draft, s = state.wizardStep;
+  if (s === 0) return d.name.trim().length > 0;
+  if (s === 1) return d.stimulus.trim().length > 0;
+  if (s === 2) return d.feelings.trim().length > 0;
+  if (s === 3) return d.emotion && d.mantra.trim().length > 0;
+  return true;
+}
+function inkField(id, placeholder, value, label) {
+  return `${label ? `<div class="flabel tracked" style="color:${HUES[state.draft.hue]}e5">${label}</div>` : ""}
+    <div class="ink-field" style="--hue:${HUES[state.draft.hue]}">
+      <input id="${id}" placeholder="${placeholder}" value="${value.replace(/"/g,"&quot;")}" autocomplete="off">
+      <div class="line"></div>
+    </div>`;
+}
+function renderWizard(forward) {
+  const host = document.getElementById("wstep-host");
+  const d = state.draft, s = state.wizardStep;
+  const hue = HUES[d.hue];
+  document.getElementById("dots").innerHTML =
+    [0,1,2,3,4].map(i => `<div class="dot ${i===s?"on":""}" style="${i===s?`background:${hue}`:""}"></div>`).join("");
+  document.getElementById("btn-wizard-back").textContent = s > 0 ? "‹" : "✕";
+
+  let html = "";
+  if (s === 0) html = `
+    <div class="wq">Name the pattern.</div>
+    <div class="ww">Short and honest — the way you'd describe it to yourself. “Road rage.” “Doomscrolling.” “Snapping at the kids.”</div>
+    ${inkField("f-name", "Road rage", d.name)}`;
+  else if (s === 1) html = `
+    <div class="wq">What sets it off?</div>
+    <div class="ww">The trigger, as a scene you can picture. You'll rehearse summoning this moment on purpose.</div>
+    ${inkField("f-stimulus", "Someone cuts me off in traffic", d.stimulus)}`;
+  else if (s === 2) html = `
+    <div class="wq">What happens now?</div>
+    <div class="ww">Capture the old reaction so you can catch it in the act.</div>
+    ${inkField("f-feelings", "A hot flash of anger", d.feelings, "I feel…")}
+    ${inkField("f-thoughts", "“They did that on purpose.”", d.thoughts, "I think…")}
+    ${inkField("f-doing", "Tailgate, mutter, grip the wheel", d.doing, "I do…")}`;
+  else if (s === 3) {
+    html = `
+    <div class="wq">Choose the new path.</div>
+    <div class="ww">When the trigger comes, what do you want to feel instead — and what will you say to yourself?</div>
+    <div id="emotion-grid">${EMOTIONS.map(e => {
+      const sel = d.emotion === e.name;
+      const h = HUES[e.hue];
+      return `<button class="echip ${sel?"sel":""}" data-e="${e.name}"
+        style="${sel?`background:${h}24;border-color:${h}99`:""}">
+        <span class="dot" style="background:${h};${sel?`box-shadow:0 0 8px ${h}e5`:""}"></span>${e.name}</button>`;
+    }).join("")}</div>`;
+    const preset = EMOTIONS.find(e => e.name === d.emotion);
+    if (preset) {
+      const h = HUES[preset.hue];
+      html += `<div class="flabel tracked" style="color:${h}e5">Your mantra</div>
+      ${preset.mantras.map(m => {
+        const sel = d.mantra === m;
+        return `<button class="mrow ${sel?"sel":""}" data-m="${m.replace(/"/g,"&quot;")}"
+          style="${sel?`background:${h}1a;border-color:${h}80`:""}">
+          <span>“${m}”</span><span class="chk" style="color:${h}">✓</span></button>`;
+      }).join("")}
+      <div class="ink-field" style="--hue:${h};margin-top:16px">
+        <input id="f-custom" placeholder="Or write your own…" value="${d.custom.replace(/"/g,"&quot;")}" autocomplete="off">
+        <div class="line"></div>
+      </div>`;
+    }
+  }
+  else html = renderBlueprint();
+
+  const step = document.createElement("div");
+  step.className = "wstep" + (forward ? "" : " back");
+  step.innerHTML = html;
+  host.innerHTML = ""; host.appendChild(step);
+
+  // wire fields
+  const bind = (id, key) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.oninput = () => { state.draft[key] = el.value; refreshContinue(); };
+    el.onfocus = () => el.closest(".ink-field").classList.add("focus");
+    el.onblur = () => el.closest(".ink-field").classList.remove("focus");
+  };
+  bind("f-name","name"); bind("f-stimulus","stimulus");
+  bind("f-feelings","feelings"); bind("f-thoughts","thoughts"); bind("f-doing","doing");
+  const custom = document.getElementById("f-custom");
+  if (custom) {
+    custom.oninput = () => {
+      d.custom = custom.value;
+      if (custom.value.trim()) d.mantra = custom.value.trim();
+      else d.mantra = "";
+      // deselect preset rows visually
+      host.querySelectorAll(".mrow").forEach(b => { b.classList.remove("sel"); b.style.background=""; b.style.borderColor=""; });
+      refreshContinue();
+    };
+    custom.onfocus = () => custom.closest(".ink-field").classList.add("focus");
+    custom.onblur = () => custom.closest(".ink-field").classList.remove("focus");
+  }
+  host.querySelectorAll(".echip").forEach(b => b.onclick = () => {
+    const e = EMOTIONS.find(x => x.name === b.dataset.e);
+    d.emotion = e.name; d.hue = e.hue;
+    if (!e.mantras.includes(d.mantra) && !d.custom.trim()) d.mantra = "";
+    renderWizard(true); refreshContinue();
+  });
+  host.querySelectorAll(".mrow").forEach(b => b.onclick = () => {
+    d.mantra = b.dataset.m; d.custom = "";
+    renderWizard(true); refreshContinue();
+  });
+  refreshContinue();
+}
+function renderBlueprint() {
+  const d = state.draft;
+  const row = (label, accent, body, last) => `
+    <div class="bp-row">
+      <div class="bp-rail"><div class="bp-dot" style="background:${accent};box-shadow:0 0 6px ${accent}cc"></div>${last?"":`<div class="bp-line"></div>`}</div>
+      <div class="bp-body"><div class="bp-l tracked" style="color:${accent}f0">${label}</div><div class="bp-t">${body}</div></div>
+    </div>`;
+  const notice = ["feelings","thoughts","doing"].filter(k => d[k].trim())
+    .map(k => `<span class="v">${k === "feelings" ? "feeling" : k === "thoughts" ? "thinking" : "doing"} </span>${d[k]}`)
+    .join("<br>");
+  return `
+    <div class="wq">Your blueprint.</div>
+    <div class="ww">Read it once, slowly. This is the path you'll practice.</div>
+    <div class="glass bp-card">
+      ${row("When", STAGES[0].hex, d.stimulus)}
+      ${row("I notice", STAGES[1].hex, notice)}
+      ${row("I accept", STAGES[2].hex, "that it's here — without a fight.")}
+      ${row("I choose " + d.emotion.toLowerCase(), STAGES[3].hex, "“" + d.mantra + "”", true)}
+    </div>
+    <div class="privacy">🔒 Stays on this device. No account, no cloud.</div>`;
+}
+function refreshContinue() {
+  const btn = document.getElementById("btn-continue");
+  const s = state.wizardStep;
+  btn.textContent = s < 4 ? "Continue" : "Begin training";
+  btn.disabled = !wizardValid();
+  btn.style.background = HUES[state.draft.hue];
+  btn.style.boxShadow = `0 4px 16px ${HUES[state.draft.hue]}73`;
+}
+document.getElementById("btn-continue").onclick = () => {
+  if (!wizardValid()) return;
+  if (state.wizardStep < 4) { state.wizardStep++; renderWizard(true); }
+  else {
+    const d = state.draft;
+    pathways.push({ id: Date.now(), name: d.name.trim(), stimulus: d.stimulus.trim(),
+      feelings: d.feelings.trim(), thoughts: d.thoughts.trim(), doing: d.doing.trim(),
+      emotion: d.emotion, hue: d.hue, mantra: d.mantra, lifetime: 0, today: 0 });
+    renderHome(); showScreen("home");
+  }
+};
+document.getElementById("btn-wizard-back").onclick = () => {
+  if (state.wizardStep > 0) { state.wizardStep--; renderWizard(false); }
+  else showScreen("home");
+};
+
+/* =========================================================================
+   DOM — Archive
+   ========================================================================= */
+function renderArchive() {
+  document.getElementById("rest-list").innerHTML = archived.map(a => `
+    <div class="glass rest-card">
+      <span class="dot" style="width:8px;height:8px;border-radius:4px;background:${HUES[a.hue]}80"></span>
+      <div style="flex:1">
+        <div class="name">${a.name}</div>
+        <div class="meta mono">${a.maturity} · ${a.lifetime} reps</div>
+      </div>
+      <button class="icon-btn" style="width:40px;height:40px;color:${HUES[a.hue]};background:${HUES[a.hue]}1f">☀</button>
+      <button class="icon-btn" style="width:40px;height:40px;font-size:13px">✕</button>
+    </div>`).join("");
+}
+document.getElementById("btn-archive").onclick = () => {
+  renderArchive();
+  document.getElementById("archive").classList.add("visible");
+};
+document.getElementById("phone").addEventListener("click", e => {
+  const arch = document.getElementById("archive");
+  if (arch.classList.contains("visible") && !arch.contains(e.target)
+      && e.target.id !== "btn-archive") arch.classList.remove("visible");
+});
+
+/* =========================================================================
+   Navigation & debug
+   ========================================================================= */
+function showScreen(name) {
+  state.screen = name;
+  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+  document.getElementById(name).classList.add("active");
+  if (name === "home") renderHome();
+  if (name === "training") renderTraining();
+}
+document.getElementById("btn-close-training").onclick = () => showScreen("home");
+document.getElementById("new-pathway").onclick = openWizard;
+
+document.querySelectorAll("#debug [data-scr]").forEach(b => b.onclick = () => {
+  if (b.dataset.scr === "wizard") openWizard(); else showScreen(b.dataset.scr);
+});
+document.getElementById("dbg-archive").onclick = () => { showScreen("home"); renderArchive(); document.getElementById("archive").classList.add("visible"); };
+document.getElementById("dbg-fire").onclick = () => { showScreen("training"); state.firedAt = clock.t; };
+document.getElementById("dbg-weave").onclick = () => { showScreen("training"); state.surgeAt = clock.t; showWeave(MATURITY[2]); };
+document.getElementById("dbg-cue").onclick = () => {
+  state.cueVisible = !state.cueVisible;
+  document.getElementById("cue").classList.toggle("visible", state.cueVisible);
+};
+document.getElementById("dbg-pause").onchange = e => state.paused = e.target.checked;
+document.getElementById("dbg-fire-scrub").oninput = e => { state.fireScrub = +e.target.value; };
+document.getElementById("dbg-charge").oninput = e => { state.chargeOverride = +e.target.value; };
+function updateDebug(fire, charge) {
+  document.getElementById("fire-val").textContent = state.fireScrub > 0 ? state.fireScrub.toFixed(2) : "–";
+  document.getElementById("charge-val").textContent = state.chargeOverride >= 0 ? state.chargeOverride.toFixed(2) : "auto";
+  document.getElementById("dbg-state").innerHTML =
+    `screen: <b>${state.screen}</b> · stage: <b>${STAGES[state.stageIdx].title}</b><br>` +
+    `charge: ${charge.toFixed(2)} · fire: ${fire.toFixed(2)}<br>` +
+    `reps: ${state.current.today} today / ${state.current.lifetime} life`;
+}
+
+renderHome();
+requestAnimationFrame(render);
+</script>
+</body>
+</html>

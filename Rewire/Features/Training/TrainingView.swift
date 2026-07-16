@@ -23,6 +23,9 @@ struct TrainingView: View {
 
     private var pathway: Pathway? { store.pathway(id: pathwayID) }
 
+    /// Chrome recedes while the cue is held or a celebration is playing.
+    private var chromeOpacity: Double { (cueVisible || celebration != nil) ? 0 : 1 }
+
     var body: some View {
         ZStack {
             if let pathway {
@@ -38,17 +41,22 @@ struct TrainingView: View {
         ZStack {
             AuroraBackground(tint: stage.color, surgeDate: surgeDate)
 
+            // The chrome recedes while the cue is held — only orb and words.
             VStack(spacing: 0) {
                 header(pathway)
+                    .opacity(chromeOpacity)
                 Spacer()
                 stageLabel
                     .padding(.bottom, 44)
+                    .opacity(chromeOpacity)
                 orb(pathway)
                 Spacer()
                 counters(pathway)
                     .padding(.bottom, 36)
+                    .opacity(chromeOpacity)
             }
             .padding(.horizontal, Metrics.screenMargin)
+            .animation(.easeOut(duration: 0.35), value: chromeOpacity)
 
             if cueVisible {
                 CueOverlay(stage: stage, pathway: pathway)
