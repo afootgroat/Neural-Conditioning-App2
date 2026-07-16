@@ -1,8 +1,8 @@
 import SwiftUI
 
 /// Home: greeting, aggregate stats, and the pathway garden. Cards zoom into
-/// training; the wizard opens as a cover; resting pathways use an overlay
-/// sheet so the moon can toggle it closed.
+/// training; first launch opens Arrival onboarding, then the wizard; resting
+/// pathways use an overlay sheet so the moon can toggle it closed.
 struct HomeView: View {
     @Environment(PathwayStore.self) private var store
 
@@ -12,6 +12,8 @@ struct HomeView: View {
     @State private var pendingRest: Pathway? = nil
     @State private var restToast: String? = nil
     @State private var moonReceiving = false
+    @State private var showOnboarding = false
+    @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
 
     var body: some View {
         NavigationStack {
@@ -100,6 +102,24 @@ struct HomeView: View {
         .preferredColorScheme(.dark)
         .fullScreenCover(item: $wizard) { mode in
             WizardView(mode: mode)
+        }
+        .fullScreenCover(isPresented: $showOnboarding) {
+            OnboardingView {
+                hasCompletedOnboarding = true
+                showOnboarding = false
+                // Let the cover dismiss before presenting the wizard.
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+                    wizard = .create
+                }
+            }
+        }
+        .onAppear {
+            if !store.pathways.isEmpty {
+                // Existing gardens skip Arrival — they’ve already begun.
+                hasCompletedOnboarding = true
+            } else if !hasCompletedOnboarding {
+                showOnboarding = true
+            }
         }
     }
 

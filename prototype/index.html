@@ -283,6 +283,116 @@
   #weave-overlay .reveal { opacity: 0; filter: blur(6px); transform: scale(0.96); transition: all 0.7s cubic-bezier(0.25,1,0.4,1) 0.35s; }
   #weave-overlay.visible .reveal { opacity: 1; filter: none; transform: none; }
 
+  /* ------- onboarding (Arrival · D) ------- */
+  #onboarding { display: none; }
+  #onboarding.active { display: block; }
+  #onboarding .ob-scene {
+    position: absolute; inset: 0; padding: 70px 28px 140px;
+    display: none; flex-direction: column;
+    opacity: 0; transform: translateY(14px);
+    transition: opacity 0.55s cubic-bezier(0.22,1,0.36,1), transform 0.6s cubic-bezier(0.22,1,0.36,1);
+  }
+  #onboarding .ob-scene.on {
+    display: flex; opacity: 1; transform: none;
+  }
+  #onboarding .ob-brand, #onboarding .ob-begin {
+    align-items: center; justify-content: center; text-align: center;
+  }
+  #onboarding .ob-mark {
+    width: 72px; height: 72px; border-radius: 50%; position: relative; margin-bottom: 36px;
+  }
+  #onboarding .ob-mark::before {
+    content: ""; position: absolute; inset: 0; border-radius: 50%;
+    border: 1px solid rgba(139,123,255,0.35);
+    box-shadow: 0 0 32px rgba(139,123,255,0.2);
+  }
+  #onboarding .ob-mark::after {
+    content: ""; position: absolute; inset: 18px; border-radius: 50%;
+    background: radial-gradient(circle at 40% 35%,
+      rgba(244,242,236,0.9), rgba(139,123,255,0.55) 45%, rgba(62,221,197,0.2) 100%);
+    box-shadow: 0 0 28px rgba(139,123,255,0.45);
+  }
+  #onboarding .ob-begin .ob-mark { width: 48px; height: 48px; margin-bottom: 28px; }
+  #onboarding .ob-begin .ob-mark::after { inset: 12px; }
+  #onboarding .ob-name {
+    font-family: var(--voice); font-size: 42px; font-weight: 500;
+    letter-spacing: 0.02em; color: var(--text-1);
+  }
+  #onboarding .ob-line {
+    margin-top: 14px; font-size: 14px; color: var(--text-2);
+    white-space: nowrap;
+  }
+  #onboarding .ob-practice { justify-content: flex-start; }
+  #onboarding .ob-label {
+    font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--choose); font-weight: 600; margin-bottom: 18px;
+  }
+  #onboarding .ob-q {
+    font-family: var(--voice); font-size: 32px; font-weight: 500;
+    line-height: 1.22; letter-spacing: -0.02em; margin-bottom: 20px; color: var(--text-1);
+  }
+  #onboarding .ob-body {
+    font-size: 15px; color: var(--text-2); line-height: 1.6; max-width: 300px;
+  }
+  #onboarding .ob-pillars { margin-top: 40px; }
+  #onboarding .ob-pillar {
+    display: flex; align-items: baseline; gap: 16px;
+    padding: 16px 0; border-top: 1px solid rgba(255,255,255,0.06);
+  }
+  #onboarding .ob-pillar:last-child { border-bottom: 1px solid rgba(255,255,255,0.06); }
+  #onboarding .ob-pillar .n {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.12em;
+    text-transform: uppercase; width: 72px; flex: none;
+  }
+  #onboarding .ob-pillar:nth-child(1) .n { color: var(--notice); }
+  #onboarding .ob-pillar:nth-child(2) .n { color: var(--accept); }
+  #onboarding .ob-pillar:nth-child(3) .n { color: var(--choose); }
+  #onboarding .ob-pillar .t {
+    font-family: var(--voice); font-size: 17px; color: var(--text-1);
+    font-style: italic; line-height: 1.35;
+  }
+  #onboarding .ob-epigraph {
+    margin: auto; max-width: 300px;
+    font-family: var(--voice); font-size: 16.5px; font-weight: 400;
+    font-style: italic; font-optical-sizing: auto;
+    color: rgba(244,242,236,0.58); line-height: 1.48;
+    letter-spacing: -0.015em; text-align: center; text-wrap: pretty;
+  }
+  #onboarding .ob-title {
+    font-family: var(--voice); font-size: 30px; font-weight: 500;
+    letter-spacing: -0.02em; margin-bottom: 12px; color: var(--text-1);
+  }
+  #onboarding .ob-begin-body {
+    font-size: 14px; color: var(--text-2); line-height: 1.55; max-width: 260px;
+  }
+  #onboarding .ob-footer {
+    position: absolute; left: 28px; right: 28px; bottom: 40px; z-index: 20;
+    display: flex; flex-direction: column; align-items: center; gap: 20px;
+  }
+  #onboarding .ob-dots { display: flex; gap: 7px; align-items: center; height: 8px; }
+  #onboarding .ob-dots i {
+    display: block; width: 6px; height: 6px; border-radius: 3px;
+    background: rgba(255,255,255,0.14);
+    transition: width 0.4s cubic-bezier(0.25,1.15,0.4,1), background 0.35s, box-shadow 0.35s;
+  }
+  #onboarding .ob-dots i.on {
+    width: 18px; background: var(--choose);
+    box-shadow: 0 0 10px rgba(139,123,255,0.5);
+  }
+  #onboarding .ob-cta {
+    width: 100%; height: 54px; border: none; border-radius: 27px;
+    font-family: var(--ui); font-size: 16px; font-weight: 600;
+    color: var(--ink); cursor: pointer; background: var(--text-1);
+    box-shadow: 0 8px 28px rgba(0,0,0,0.4);
+    transition: transform 0.18s, background 0.4s, box-shadow 0.4s, color 0.3s;
+  }
+  #onboarding .ob-cta:active { transform: scale(0.96); }
+  #onboarding .ob-cta.glow {
+    background: linear-gradient(135deg, #c4bbff, var(--choose));
+    color: #0a0814;
+    box-shadow: 0 8px 32px rgba(139,123,255,0.4);
+  }
+
   /* ------- wizard ------- */
   #wizard .content { position: absolute; inset: 0; padding: 62px 24px 0; display: flex; flex-direction: column; }
   #wizard .chrome { display: flex; align-items: center; justify-content: space-between; padding-bottom: 20px; }
@@ -541,6 +651,41 @@
       </div>
     </div>
 
+    <!-- ONBOARDING (Arrival · D) -->
+    <div class="screen" id="onboarding">
+      <div class="ob-scene ob-brand on" data-ob="0">
+        <div class="ob-mark"></div>
+        <div class="ob-name">Rewire</div>
+        <div class="ob-line">A practice for the pattern you keep repeating.</div>
+      </div>
+      <div class="ob-scene ob-practice" data-ob="1">
+        <div class="ob-label">The practice</div>
+        <div class="ob-q">Don’t fight the pattern,<br>rehearse a new one.</div>
+        <div class="ob-body">
+          Each rehearsal strengthens the new pathway. Train it until the new path
+          is the one your mind reaches for first.
+        </div>
+        <div class="ob-pillars">
+          <div class="ob-pillar"><div class="n">Notice</div><div class="t">See it happening</div></div>
+          <div class="ob-pillar"><div class="n">Accept</div><div class="t">Let it be here</div></div>
+          <div class="ob-pillar"><div class="n">Choose</div><div class="t">Take the new path</div></div>
+        </div>
+        <div class="ob-epigraph">“The signal you amplify becomes<br>the reality you perceive.”</div>
+      </div>
+      <div class="ob-scene ob-begin" data-ob="2">
+        <div class="ob-mark"></div>
+        <div class="ob-title">Name one pattern.</div>
+        <div class="ob-begin-body">
+          Road rage. Doomscrolling. Snapping at the kids.
+          Short and honest — the way you’d say it to yourself.
+        </div>
+      </div>
+      <div class="ob-footer">
+        <div class="ob-dots" id="ob-dots"><i class="on"></i><i></i><i></i></div>
+        <button class="ob-cta" id="ob-cta" type="button">Continue</button>
+      </div>
+    </div>
+
     <!-- WIZARD -->
     <div class="screen" id="wizard">
       <div class="content">
@@ -582,6 +727,7 @@
     <button data-scr="home">Home</button>
     <button data-scr="training">Training</button>
     <button data-scr="wizard">Wizard</button>
+    <button data-scr="onboarding">Onboarding</button>
     <button id="dbg-archive">Archive</button>
     <h3>Moments</h3>
     <button id="dbg-fire">Fire rep</button>
@@ -882,6 +1028,7 @@ const state = {
   fieldLimitShown: {},
   editingId: null,
   wizardReturn: "home",
+  onboardingStep: 0,
 };
 const clock = { t: 0, last: performance.now() };
 
@@ -916,6 +1063,7 @@ function render(nowMs) {
 
   const training = state.screen === "training";
   const wizard = state.screen === "wizard";
+  const onboarding = state.screen === "onboarding";
 
   gl.uniform1f(U.u_time, t);
   gl.uniform1f(U.u_mode, training ? 1 : 0);
@@ -924,6 +1072,11 @@ function render(nowMs) {
   let tint;
   if (training) tint = STAGES[state.stageIdx].color;
   else if (wizard && state.draft) tint = hexToRgb(HUES[state.draft.hue]).map(v => v*0.7);
+  else if (onboarding) {
+    tint = state.onboardingStep === 1
+      ? hexToRgb("#3EDDC5").map(v => v * 0.85)
+      : hexToRgb("#8B7BFF").map(v => v * 0.85);
+  }
   else tint = hexToRgb("#4B4B8F");
   gl.uniform3f(U.u_tint, tint[0], tint[1], tint[2]);
 
@@ -1667,12 +1820,43 @@ function showScreen(name) {
   document.getElementById(name).classList.add("active");
   if (name === "home") renderHome();
   if (name === "training") renderTraining();
+  if (name === "onboarding") renderOnboarding();
 }
+
+function renderOnboarding() {
+  const step = state.onboardingStep;
+  document.querySelectorAll("#onboarding .ob-scene").forEach(el => {
+    el.classList.toggle("on", +el.dataset.ob === step);
+  });
+  document.querySelectorAll("#ob-dots i").forEach((dot, i) => {
+    dot.classList.toggle("on", i === step);
+  });
+  const cta = document.getElementById("ob-cta");
+  cta.textContent = step === 2 ? "Begin" : "Continue";
+  cta.classList.toggle("glow", step === 2);
+}
+
+function openOnboarding() {
+  state.onboardingStep = 0;
+  showScreen("onboarding");
+}
+
+document.getElementById("ob-cta").onclick = () => {
+  if (state.onboardingStep < 2) {
+    state.onboardingStep++;
+    renderOnboarding();
+  } else {
+    openWizard();
+  }
+};
+
 document.getElementById("btn-close-training").onclick = () => showScreen("home");
 document.getElementById("new-pathway").onclick = openWizard;
 
 document.querySelectorAll("#debug [data-scr]").forEach(b => b.onclick = () => {
-  if (b.dataset.scr === "wizard") openWizard(); else showScreen(b.dataset.scr);
+  if (b.dataset.scr === "wizard") openWizard();
+  else if (b.dataset.scr === "onboarding") openOnboarding();
+  else showScreen(b.dataset.scr);
 });
 document.getElementById("dbg-archive").onclick = () => { showScreen("home"); openArchive(); };
 document.getElementById("dbg-fire").onclick = () => { showScreen("training"); state.firedAt = clock.t; };

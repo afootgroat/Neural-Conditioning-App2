@@ -133,7 +133,8 @@
   }
   .brand-line {
     margin-top: 14px; font-size: 14px; color: var(--text-2);
-    letter-spacing: 0.01em; opacity: 0; transform: translateY(10px);
+    letter-spacing: 0.01em; white-space: nowrap;
+    opacity: 0; transform: translateY(10px);
   }
   .scene.on .brand-line {
     animation: rise 0.9s var(--ease) 0.7s both;
@@ -193,7 +194,9 @@
   /* —— Scene 2: Promise —— */
   .promise-stack {
     flex: 1; display: flex; flex-direction: column;
-    justify-content: center; padding: 0 4px;
+    justify-content: flex-start;
+    /* Clear absolute footer (dots + CTA) so the epigraph centers above the pill. */
+    padding: 12px 4px 110px;
   }
   .promise-label {
     font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase;
@@ -240,6 +243,15 @@
     font-family: var(--voice); font-size: 17px; color: var(--text-1);
     font-style: italic; line-height: 1.35;
   }
+  .promise-epigraph {
+    margin: auto; max-width: 300px;
+    font-family: var(--voice); font-size: 16.5px; font-weight: 400;
+    font-style: italic; font-optical-sizing: auto;
+    color: rgba(244,242,236,0.58); line-height: 1.48;
+    letter-spacing: -0.015em; text-align: center;
+    opacity: 0; transform: translateY(8px);
+  }
+  .scene.on .promise-epigraph { animation: rise 0.9s var(--ease) 1.1s both; }
 
   /* —— Scene 3: Begin —— */
   .begin-stack {
@@ -375,14 +387,15 @@
         <div class="promise-label">The practice</div>
         <div class="promise-q">Don’t fight the pattern,<br>rehearse a new one.</div>
         <div class="promise-body">
-          When the old reaction rises, you meet it the same way, every time —
-          until the new path is the one your mind reaches for first.
+          Each rehearsal strengthens the new pathway. Train it until the new path
+          is the one your mind reaches for first.
         </div>
         <div class="pillars">
           <div class="pillar"><div class="n">Notice</div><div class="t">See it happening</div></div>
           <div class="pillar"><div class="n">Accept</div><div class="t">Let it be here</div></div>
           <div class="pillar"><div class="n">Choose</div><div class="t">Take the new path</div></div>
         </div>
+        <div class="promise-epigraph">“The signal you amplify becomes<br>the reality you perceive.”</div>
       </div>
     </div>
 
@@ -442,7 +455,7 @@ function setScene(next) {
 
   cta.textContent = i === SCENES - 1 ? "Begin" : "Continue";
   cta.classList.toggle("glow", i === SCENES - 1);
-  skip.classList.toggle("show", i > 0 && i < SCENES - 1);
+  skip.classList.toggle("show", i === 1);
 
   stopBreath();
   if (i === 1) startBreath();
