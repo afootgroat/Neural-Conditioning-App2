@@ -676,7 +676,8 @@ function render(nowMs) {
   gl.uniform3f(U.u_hueA, hueA[0], hueA[1], hueA[2]);
   gl.uniform3f(U.u_hueB, hueB[0], hueB[1], hueB[2]);
   gl.uniform1f(U.u_breathe, 1);
-  gl.uniform1f(U.u_seed, (state.current.lifetime % 64) + state.stageIdx * 0.13);
+  /* seed shifts only when a rep fires — continuous interior within a rep */
+  gl.uniform1f(U.u_seed, state.current.lifetime % 64);
 
   let fire = 0;
   if (state.fireScrub > 0) fire = 1 - smooth(state.fireScrub);

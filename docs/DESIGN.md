@@ -90,7 +90,8 @@ used as text.
    breathing at 6 breaths/min when idle.
 3. `ripple` — screen-space rep-completion wave (layerEffect: chromatic
    dispersion + refraction falling off with radius).
-4. `weave` — stage-advancement celebration; interference of two line fields.
+4. `weave` — stage-advancement celebration: six luminous strands braiding
+   around the vertical axis, drawing together as the new stage seals.
 
 Prototype parity: each shader is ported 1:1 to GLSL in `prototype/` and
 audited in a browser before the Metal version is finalized.

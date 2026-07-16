@@ -152,7 +152,9 @@ struct TrainingView: View {
                 previousStage: previousStage,
                 stageChangedAt: stageChangedAt,
                 firedAt: firedAt,
-                seed: Double(pathway.lifetimeReps % 64) + Double(stage.rawValue) * 0.13,
+                // Seed shifts only when a rep fires — the interior stays
+                // continuous within a rep, and no two reps render alike.
+                seed: Double(pathway.lifetimeReps % 64),
                 isHolding: isHolding
             )
         }
@@ -232,34 +234,41 @@ struct TrainingView: View {
 
 // MARK: - Rep ripple (screen-space layer effect)
 
-/// Refracts the whole training screen outward from its center when a rep
-/// fires. Always mounted (so view identity is stable); the timeline pauses
-/// and amplitude is zero when idle.
+/// Refracts the whole training screen outward from the orb when a rep fires.
+/// Always mounted (so view identity is stable); `active` gates the timeline,
+/// flipping back off after the wave completes so the screen stops re-rendering.
 private struct RepRipple: ViewModifier {
     var firedAt: Date?
+
+    @State private var active = false
 
     private static let duration = 1.1
 
     func body(content: Content) -> some View {
-        TimelineView(.animation(minimumInterval: nil, paused: !isActive)) { context in
+        TimelineView(.animation(minimumInterval: nil, paused: !active)) { context in
             let progress = progress(at: context.date)
+            let amplitude: Float = active && progress > 0 && progress < 1 ? 1 : 0
             content
-                .layerEffect(
-                    ShaderLibrary.ripple(
-                        .float2(UIScreen.main.bounds.size),
-                        .float2(CGPoint(x: UIScreen.main.bounds.midX,
-                                        y: UIScreen.main.bounds.midY)),
-                        .float(Float(progress)),
-                        .float(progress > 0 && progress < 1 ? 1 : 0)
-                    ),
-                    maxSampleOffset: CGSize(width: 40, height: 40)
-                )
+                .visualEffect { view, proxy in
+                    view.layerEffect(
+                        ShaderLibrary.ripple(
+                            .float2(proxy.size),
+                            // The orb sits at ~52% of the screen's height.
+                            .float2(CGPoint(x: proxy.size.width * 0.5,
+                                            y: proxy.size.height * 0.52)),
+                            .float(Float(progress)),
+                            .float(amplitude)
+                        ),
+                        maxSampleOffset: CGSize(width: 40, height: 40)
+                    )
+                }
         }
-    }
-
-    private var isActive: Bool {
-        guard let firedAt else { return false }
-        return Date().timeIntervalSince(firedAt) < Self.duration
+        .task(id: firedAt) {
+            guard firedAt != nil else { return }
+            active = true
+            try? await Task.sleep(for: .seconds(Self.duration + 0.05))
+            active = false
+        }
     }
 
     private func progress(at date: Date) -> Double {

@@ -11,7 +11,6 @@ Rewire.xcodeproj/            hand-written pbxproj using Xcode 16
 Rewire/
   App/
     RewireApp.swift          @main, environment wiring
-    RootView.swift           nav shell, zoom transitions, ripple host
   Models/
     Pathway.swift            Codable domain model + MaturityStage + RepStage
     EmotionPreset.swift      curated emotions (hue + mantra suggestions)
@@ -20,11 +19,11 @@ Rewire/
                              (atomic writes to Application Support)
   Engine/
     Haptics.swift            CoreHaptics engine wrapper, named patterns
-    ShaderPhase.swift        time/phase plumbing for TimelineView-driven shaders
   Design/
-    Theme.swift              color tokens, typography, spacing, springs
-    Components/              GlassCard, StatChip, ProgressThread, TrackedLabel,
-                             RollingCounter, SerifPrompt, HueGrid …
+    Theme.swift              color tokens, typography, springs, TrackedLabel
+    Components/              GlassCard, ProgressThread, RollingCounter,
+                             StatBlock, GlowButton, PressableStyle,
+                             AuroraBackground
   Shaders/
     Rewire.metal             aurora / orb / ripple / weave ([[stitchable]])
   Features/

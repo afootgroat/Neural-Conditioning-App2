@@ -15,7 +15,8 @@ struct AuroraBackground: View {
 
     var body: some View {
         GeometryReader { geo in
-            TimelineView(.animation(minimumInterval: 1.0 / 30.0, paused: false)) { context in
+            // Under Reduce Motion the field holds still, so stop ticking too.
+            TimelineView(.animation(minimumInterval: 1.0 / 30.0, paused: reduceMotion)) { context in
                 let t = reduceMotion ? 0 : context.date.timeIntervalSince(Self.epoch)
                 let energy = surgeEnvelope(at: context.date)
                 Rectangle()
