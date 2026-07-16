@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rewire — Mantra review</title>
+<style>
+  :root {
+    --ink: #07070C;
+    --raised: #101018;
+    --text-1: #F4F2EC;
+    --text-2: #8E8E9E;
+    --text-3: #55555F;
+    --hairline: rgba(255,255,255,0.08);
+    --ui: "SF Pro Text", -apple-system, "Segoe UI", system-ui, sans-serif;
+    --voice: "New York", "Iowan Old Style", Georgia, serif;
+    --tide: #4DB6C8;
+    --dawn: #E08A6A;
+    --glacier: #7BA3C9;
+    --honey: #D4A84B;
+    --moss: #7A9E6E;
+    --ember: #E07A4F;
+    --orchid: #B07BC8;
+    --iris: #8B7BFF;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-font-smoothing: antialiased; }
+  body {
+    min-height: 100vh;
+    background: var(--ink);
+    color: var(--text-1);
+    font-family: var(--ui);
+  }
+
+  /* ---- chrome ---- */
+  .top {
+    position: sticky; top: 0; z-index: 20;
+    background: rgba(7,7,12,0.92);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--hairline);
+    padding: 18px 28px 0;
+  }
+  .top-inner { max-width: 1100px; margin: 0 auto; }
+  .eyebrow {
+    font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase;
+    color: var(--text-3); font-weight: 600; margin-bottom: 8px;
+  }
+  h1 {
+    font-family: var(--voice); font-size: 28px; font-weight: 500;
+    margin-bottom: 6px;
+  }
+  .lede {
+    font-size: 14px; color: var(--text-2); line-height: 1.5;
+    max-width: 620px; margin-bottom: 16px;
+  }
+  .nav {
+    display: flex; gap: 6px; overflow-x: auto; padding-bottom: 14px;
+    scrollbar-width: none;
+  }
+  .nav::-webkit-scrollbar { display: none; }
+  .nav a {
+    flex: none; text-decoration: none; color: var(--text-2);
+    font-size: 12px; font-weight: 600; letter-spacing: 0.04em;
+    padding: 7px 12px; border-radius: 999px;
+    border: 1px solid var(--hairline);
+    transition: color 0.15s, border-color 0.15s, background 0.15s;
+  }
+  .nav a:hover, .nav a.on {
+    color: var(--text-1);
+    border-color: color-mix(in srgb, var(--hue, var(--iris)) 55%, transparent);
+    background: color-mix(in srgb, var(--hue, var(--iris)) 14%, transparent);
+  }
+
+  .actions {
+    display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+    margin: -4px 0 14px;
+  }
+  .btn {
+    appearance: none; border: 1px solid var(--hairline); background: rgba(255,255,255,0.04);
+    color: var(--text-1); font: 600 12px/1 var(--ui); letter-spacing: 0.03em;
+    padding: 9px 14px; border-radius: 999px; cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, opacity 0.15s;
+  }
+  .btn:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.16); }
+  .btn.primary {
+    background: color-mix(in srgb, var(--iris) 28%, transparent);
+    border-color: color-mix(in srgb, var(--iris) 55%, transparent);
+  }
+  .btn:disabled { opacity: 0.35; cursor: default; }
+  .status {
+    font-size: 12px; color: var(--text-3); min-height: 1em;
+  }
+  .status.ok { color: #7AD4A8; }
+
+  /* ---- layout ---- */
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 28px 28px 100px; }
+  .emotion {
+    scroll-margin-top: 140px;
+    margin-bottom: 48px;
+    padding: 24px;
+    border-radius: 24px;
+    background: var(--raised);
+    border: 1px solid var(--hairline);
+  }
+  .emotion-head {
+    display: flex; align-items: baseline; justify-content: space-between;
+    gap: 16px; margin-bottom: 18px; flex-wrap: wrap;
+  }
+  .emotion-title {
+    display: flex; align-items: center; gap: 10px;
+  }
+  .emotion-title .dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    background: var(--hue);
+    box-shadow: 0 0 10px color-mix(in srgb, var(--hue) 70%, transparent);
+  }
+  .emotion-title h2 {
+    font-family: var(--voice); font-size: 22px; font-weight: 500;
+  }
+  .emotion-meta {
+    font-size: 12px; color: var(--text-3);
+  }
+  .reset-emotion {
+    font-size: 11px; font-weight: 600; color: var(--text-3);
+    background: none; border: none; cursor: pointer; letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .reset-emotion:hover { color: var(--text-2); }
+
+  table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+  }
+  th {
+    text-align: left; font-size: 10px; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--text-3); font-weight: 600;
+    padding: 0 0 10px 0;
+  }
+  td {
+    vertical-align: top;
+    padding: 0;
+  }
+  td.col-current {
+    width: 42%;
+    padding-right: 18px;
+    border-right: 1px solid var(--hairline);
+  }
+  td.col-alts {
+    width: 58%;
+    padding-left: 18px;
+  }
+
+  .slot-list, .alt-list {
+    display: flex; flex-direction: column; gap: 8px;
+  }
+
+  .slot, .alt {
+    position: relative;
+    border-radius: 14px;
+    padding: 12px 14px;
+    font-family: var(--voice);
+    font-size: 15px;
+    line-height: 1.4;
+    transition: border-color 0.15s, background 0.15s, transform 0.15s, opacity 0.15s;
+  }
+
+  .slot {
+    min-height: 52px;
+    background: color-mix(in srgb, var(--hue) 10%, transparent);
+    border: 1px dashed color-mix(in srgb, var(--hue) 45%, transparent);
+    color: var(--text-1);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .slot .n {
+    flex: none;
+    width: 18px; height: 18px; border-radius: 50%;
+    display: grid; place-items: center;
+    font-family: var(--ui); font-size: 10px; font-weight: 700;
+    color: var(--hue);
+    background: color-mix(in srgb, var(--hue) 18%, transparent);
+  }
+  .slot .text { flex: 1; }
+  .slot.drag-over {
+    border-style: solid;
+    border-color: var(--hue);
+    background: color-mix(in srgb, var(--hue) 22%, transparent);
+    transform: scale(1.01);
+  }
+  .slot.changed {
+    border-style: solid;
+    border-color: color-mix(in srgb, var(--hue) 70%, transparent);
+  }
+  .slot .revert {
+    flex: none;
+    appearance: none; border: none; background: none;
+    color: var(--text-3); font-size: 11px; font-weight: 600;
+    cursor: pointer; letter-spacing: 0.02em;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.15s;
+  }
+  .slot.changed .revert { opacity: 1; pointer-events: auto; }
+  .slot .revert:hover { color: var(--text-2); }
+
+  .alt {
+    cursor: grab;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--hairline);
+    color: var(--text-2);
+    user-select: none;
+  }
+  .alt:active { cursor: grabbing; }
+  .alt:hover {
+    color: var(--text-1);
+    border-color: rgba(255,255,255,0.16);
+  }
+  .alt.dragging { opacity: 0.35; }
+  .alt.in-use {
+    opacity: 0.35;
+    border-style: dashed;
+  }
+  .alt .hint {
+    display: block;
+    font-family: var(--ui);
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-3);
+    margin-bottom: 4px;
+    font-weight: 600;
+  }
+
+  .hint-bar {
+    margin-top: 14px;
+    font-size: 12px;
+    color: var(--text-3);
+    line-height: 1.45;
+  }
+
+  @media (max-width: 760px) {
+    .top, .wrap { padding-left: 16px; padding-right: 16px; }
+    table, tbody, tr, th, td { display: block; width: 100%; }
+    th.hide-mobile { display: none; }
+    td.col-current {
+      width: 100%; padding-right: 0; border-right: none;
+      padding-bottom: 16px; margin-bottom: 16px;
+      border-bottom: 1px solid var(--hairline);
+    }
+    td.col-alts { width: 100%; padding-left: 0; }
+    .emotion { padding: 18px; }
+  }
+
+  /* export modal */
+  .modal {
+    position: fixed; inset: 0; z-index: 40;
+    background: rgba(0,0,0,0.55);
+    display: none; align-items: center; justify-content: center;
+    padding: 24px;
+  }
+  .modal.open { display: flex; }
+  .modal-card {
+    width: min(720px, 100%);
+    max-height: min(80vh, 720px);
+    background: var(--raised);
+    border: 1px solid var(--hairline);
+    border-radius: 20px;
+    padding: 22px;
+    display: flex; flex-direction: column; gap: 12px;
+  }
+  .modal-card h3 {
+    font-family: var(--voice); font-size: 20px; font-weight: 500;
+  }
+  .modal-card p { font-size: 13px; color: var(--text-2); }
+  .modal-card textarea {
+    flex: 1; min-height: 280px;
+    background: rgba(0,0,0,0.35);
+    border: 1px solid var(--hairline);
+    border-radius: 12px;
+    color: var(--text-1);
+    font: 12px/1.45 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    padding: 14px;
+    resize: vertical;
+  }
+  .modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="top-inner">
+    <div class="eyebrow">Wizard · step 4</div>
+    <h1>Default mantras</h1>
+    <p class="lede">
+      Current three suggestions on the left. Drag any alternative onto a slot to replace it.
+      Changed slots glow in the emotion hue — revert one, or export the set when you’re happy.
+    </p>
+    <div class="actions">
+      <button class="btn primary" id="btn-export">Export current set</button>
+      <button class="btn" id="btn-reset-all">Reset all</button>
+      <span class="status" id="status"></span>
+    </div>
+    <nav class="nav" id="nav"></nav>
+  </div>
+</header>
+
+<main class="wrap" id="root"></main>
+
+<div class="modal" id="modal" role="dialog" aria-modal="true">
+  <div class="modal-card">
+    <h3>Export</h3>
+    <p>Copy into <code>EmotionPreset.swift</code> or the prototype <code>EMOTIONS</code> array.</p>
+    <textarea id="export-text" readonly></textarea>
+    <div class="modal-actions">
+      <button class="btn" id="btn-close">Close</button>
+      <button class="btn primary" id="btn-copy">Copy</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const HUES = {
+  Calm: "tide", Compassion: "dawn", Curiosity: "glacier", Gratitude: "honey",
+  Patience: "moss", Confidence: "ember", Playfulness: "orchid", Acceptance: "iris",
+};
+const HUE_CSS = {
+  tide: "var(--tide)", dawn: "var(--dawn)", glacier: "var(--glacier)",
+  honey: "var(--honey)", moss: "var(--moss)", ember: "var(--ember)",
+  orchid: "var(--orchid)", iris: "var(--iris)",
+};
+
+/** Current shipping mantras (EmotionPreset.swift / prototype EMOTIONS). */
+const ORIGINALS = {
+  Calm: [
+    "This moment is not an emergency.",
+    "I can slow everything down.",
+    "Soft shoulders, open breath.",
+  ],
+  Compassion: [
+    "They are carrying something too.",
+    "Soft heart, steady hands.",
+    "I can be kind before I am right.",
+  ],
+  Curiosity: [
+    "Interesting — what is really happening here?",
+    "What else could this mean?",
+    "What would a more useful perspective be?",
+  ],
+  Gratitude: [
+    "Even this is part of a good life.",
+    "One small mercy is enough to start.",
+    "Thank you, anyway.",
+  ],
+  Patience: [
+    "I can wait one more breath.",
+    "Nothing needs to happen yet.",
+    "Slow is still forward.",
+  ],
+  Confidence: [
+    "I act from the center, not the edge.",
+    "My ground does not move.",
+    "I choose my next move.",
+  ],
+  Playfulness: [
+    "This is a strange little game.",
+    "A little lightness won't break me.",
+    "I can smile at the absurdity.",
+  ],
+  Acceptance: [
+    "Letting it be frees my next move.",
+    "I don't argue with what already is.",
+    "Resistance is optional.",
+  ],
+};
+
+/** Ten alternatives per emotion, same quiet second-person voice. */
+const ALTERNATIVES = {
+  Calm: [
+    "Breathe once before you answer.",
+    "The wave can pass through me.",
+    "Quiet is available right now.",
+    "I don't have to catch every spark.",
+    "Let the body settle first.",
+    "There is room between stimulus and me.",
+    "I can meet this without rushing.",
+    "Soft shoulders, open breath.",
+    "Nothing here requires panic.",
+    "I return to the next breath.",
+  ],
+  Compassion: [
+    "Hurt people move like this sometimes.",
+    "I can hold them without fixing them.",
+    "Gentleness is still strength.",
+    "May we both be a little freer.",
+    "I leave room for their story.",
+    "Kindness first — then clarity.",
+    "I don't need to win this feeling.",
+    "Warmth costs me nothing here.",
+    "I can care and still keep my edge soft.",
+    "We are both trying, somehow.",
+  ],
+  Curiosity: [
+    "What am I making this mean?",
+    "There's a detail I haven't noticed.",
+    "What would a kinder reading be?",
+    "I can ask before I conclude.",
+    "What is this inviting me to see?",
+    "Maybe this isn't what I think.",
+    "I turn toward it with interest.",
+    "What's the smallest true thing here?",
+    "I don't know yet — good.",
+    "Let me look again, slower.",
+  ],
+  Gratitude: [
+    "Something here is still intact.",
+    "I can find one honest thank-you.",
+    "This too can be held with thanks.",
+    "I remember what remains.",
+    "Even friction has a teacher in it.",
+    "I am not empty of good.",
+    "One small mercy is enough to start.",
+    "Life is larger than this sting.",
+    "I notice what is quietly working.",
+    "Grateful, without pretending it's easy.",
+  ],
+  Patience: [
+    "I can wait one more breath.",
+    "Urgency is not always truth.",
+    "This can ripen without me forcing it.",
+    "I am not late to my own life.",
+    "Slow is still forward.",
+    "I let the timing be imperfect.",
+    "The pause is part of the path.",
+    "I don't have to finish this feeling now.",
+    "Time is not against me here.",
+    "I stay with it, unhurried.",
+  ],
+  Confidence: [
+    "I already know how to begin.",
+    "I can stand inside my own opinion.",
+    "Uncertainty does not erase me.",
+    "I act from the center, not the edge.",
+    "I trust the next honest step.",
+    "I am allowed to take up this space.",
+    "Doubt can sit beside me — I still move.",
+    "I don't shrink to make this easier.",
+    "My presence is enough for now.",
+    "I meet this as someone who can.",
+  ],
+  Playfulness: [
+    "I can smile at the absurdity.",
+    "What if this were optional?",
+    "A little lightness won't break me.",
+    "I don't have to be so serious about it.",
+    "Let me try the playful angle.",
+    "This can be curious, not crushing.",
+    "I loosen my grip on the outcome.",
+    "There's comedy hiding in this tension.",
+    "I can dance with it for a moment.",
+    "Heavy things sometimes need soft hands.",
+  ],
+  Acceptance: [
+    "This is the weather I'm in.",
+    "I stop fighting the already-true.",
+    "I can dislike it and still allow it.",
+    "Resistance is optional.",
+    "What is, is — I start from there.",
+    "I put down the argument with reality.",
+    "I make peace with this chapter.",
+    "Not forever — just for now, yes.",
+    "I open to what I cannot edit.",
+    "Letting it be frees my next move.",
+  ],
+};
+
+const EMOTIONS = Object.keys(ORIGINALS);
+
+/** Working state: current[emotion] = [3 strings] */
+const state = {
+  current: Object.fromEntries(EMOTIONS.map(e => [e, [...ORIGINALS[e]]])),
+};
+
+let dragPayload = null; // { emotion, text, from: 'alt'|'slot', slotIndex? }
+
+function isChanged(emotion, i) {
+  return state.current[emotion][i] !== ORIGINALS[emotion][i];
+}
+
+function emotionChanged(emotion) {
+  return state.current[emotion].some((_, i) => isChanged(emotion, i));
+}
+
+function anyChanged() {
+  return EMOTIONS.some(emotionChanged);
+}
+
+function setStatus(msg, ok = false) {
+  const el = document.getElementById("status");
+  el.textContent = msg || "";
+  el.classList.toggle("ok", !!ok);
+}
+
+function renderNav() {
+  const nav = document.getElementById("nav");
+  nav.innerHTML = EMOTIONS.map(name => {
+    const hue = HUES[name];
+    return `<a href="#e-${name}" style="--hue:${HUE_CSS[hue]}" data-e="${name}">${name}</a>`;
+  }).join("");
+}
+
+function render() {
+  const root = document.getElementById("root");
+  root.innerHTML = EMOTIONS.map(name => {
+    const hue = HUES[name];
+    const hueCss = HUE_CSS[hue];
+    const current = state.current[name];
+    const used = new Set(current);
+    const alts = ALTERNATIVES[name];
+
+    const slots = current.map((text, i) => `
+      <div class="slot ${isChanged(name, i) ? "changed" : ""}"
+           data-emotion="${name}" data-slot="${i}"
+           style="--hue:${hueCss}">
+        <span class="n">${i + 1}</span>
+        <span class="text">${escapeHtml(text)}</span>
+        <button type="button" class="revert" data-emotion="${name}" data-slot="${i}" title="Restore original">Revert</button>
+      </div>`).join("");
+
+    const altCards = alts.map((text, i) => `
+      <div class="alt ${used.has(text) ? "in-use" : ""}"
+           draggable="true"
+           data-emotion="${name}"
+           data-alt="${i}">
+        <span class="hint">Drag to a slot</span>
+        ${escapeHtml(text)}
+      </div>`).join("");
+
+    return `
+      <section class="emotion" id="e-${name}" style="--hue:${hueCss}">
+        <div class="emotion-head">
+          <div class="emotion-title">
+            <span class="dot"></span>
+            <h2>${name}</h2>
+          </div>
+          <div style="display:flex;align-items:center;gap:14px">
+            <span class="emotion-meta">${emotionChanged(name) ? "Edited" : "Shipping defaults"} · hue ${hue}</span>
+            <button type="button" class="reset-emotion" data-reset="${name}">Reset</button>
+          </div>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th class="col-current">Current (3)</th>
+              <th class="col-alts hide-mobile">Alternatives — drag onto a current slot</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="col-current">
+                <div class="slot-list">${slots}</div>
+              </td>
+              <td class="col-alts">
+                <div class="alt-list">${altCards}</div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <p class="hint-bar">Tip: drop an alternative on slot 1, 2, or 3. The displaced line stays available in alternatives if it was one of them.</p>
+      </section>`;
+  }).join("");
+
+  wireInteractions();
+  document.getElementById("btn-reset-all").disabled = !anyChanged();
+  updateActiveNav();
+}
+
+function escapeHtml(s) {
+  return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+
+function wireInteractions() {
+  document.querySelectorAll(".alt").forEach(el => {
+    el.addEventListener("dragstart", e => {
+      const emotion = el.dataset.emotion;
+      const text = ALTERNATIVES[emotion][+el.dataset.alt];
+      dragPayload = { emotion, text, from: "alt" };
+      el.classList.add("dragging");
+      e.dataTransfer.effectAllowed = "copy";
+      e.dataTransfer.setData("text/plain", text);
+    });
+    el.addEventListener("dragend", () => {
+      el.classList.remove("dragging");
+      dragPayload = null;
+      document.querySelectorAll(".slot.drag-over").forEach(s => s.classList.remove("drag-over"));
+    });
+  });
+
+  document.querySelectorAll(".slot").forEach(slot => {
+    slot.addEventListener("dragover", e => {
+      if (!dragPayload || dragPayload.emotion !== slot.dataset.emotion) return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "copy";
+      slot.classList.add("drag-over");
+    });
+    slot.addEventListener("dragleave", () => slot.classList.remove("drag-over"));
+    slot.addEventListener("drop", e => {
+      e.preventDefault();
+      slot.classList.remove("drag-over");
+      if (!dragPayload || dragPayload.emotion !== slot.dataset.emotion) return;
+      const i = +slot.dataset.slot;
+      const emotion = slot.dataset.emotion;
+      state.current[emotion][i] = dragPayload.text;
+      setStatus(`Updated ${emotion} · slot ${i + 1}`, true);
+      render();
+    });
+  });
+
+  document.querySelectorAll(".revert").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const emotion = btn.dataset.emotion;
+      const i = +btn.dataset.slot;
+      state.current[emotion][i] = ORIGINALS[emotion][i];
+      setStatus(`Reverted ${emotion} · slot ${i + 1}`);
+      render();
+    });
+  });
+
+  document.querySelectorAll("[data-reset]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const emotion = btn.dataset.reset;
+      state.current[emotion] = [...ORIGINALS[emotion]];
+      setStatus(`Reset ${emotion}`);
+      render();
+    });
+  });
+}
+
+function updateActiveNav() {
+  const links = [...document.querySelectorAll("#nav a")];
+  const sections = EMOTIONS.map(name => document.getElementById(`e-${name}`));
+  const onScroll = () => {
+    let active = EMOTIONS[0];
+    const y = window.scrollY + 160;
+    for (const sec of sections) {
+      if (sec && sec.offsetTop <= y) active = sec.id.replace("e-", "");
+    }
+    links.forEach(a => a.classList.toggle("on", a.dataset.e === active));
+  };
+  window.removeEventListener("scroll", window.__mantraNavScroll);
+  window.__mantraNavScroll = onScroll;
+  window.addEventListener("scroll", onScroll, { passive: true });
+  onScroll();
+}
+
+function exportSwift() {
+  return EMOTIONS.map(name => {
+    const hue = HUES[name];
+    const lines = state.current[name].map(m => `            "${m.replace(/\\/g,"\\\\").replace(/"/g,'\\"')}",`).join("\n");
+    return `        EmotionPreset(name: "${name}", hue: .${hue}, mantras: [\n${lines}\n        ]),`;
+  }).join("\n");
+}
+
+function exportJS() {
+  return EMOTIONS.map(name => {
+    const hue = HUES[name];
+    const mantras = state.current[name].map(m => JSON.stringify(m)).join(", ");
+    return `  { name: "${name}", hue: "${hue}", mantras: [${mantras}] },`;
+  }).join("\n");
+}
+
+document.getElementById("btn-reset-all").onclick = () => {
+  EMOTIONS.forEach(e => { state.current[e] = [...ORIGINALS[e]]; });
+  setStatus("All emotions reset to shipping defaults");
+  render();
+};
+
+document.getElementById("btn-export").onclick = () => {
+  const text =
+`// Swift — EmotionPreset.swift
+${exportSwift()}
+
+// JS — prototype EMOTIONS
+const EMOTIONS = [
+${exportJS()}
+];`;
+  document.getElementById("export-text").value = text;
+  document.getElementById("modal").classList.add("open");
+};
+
+document.getElementById("btn-close").onclick = () => {
+  document.getElementById("modal").classList.remove("open");
+};
+document.getElementById("modal").onclick = (e) => {
+  if (e.target.id === "modal") document.getElementById("modal").classList.remove("open");
+};
+document.getElementById("btn-copy").onclick = async () => {
+  const ta = document.getElementById("export-text");
+  ta.select();
+  try {
+    await navigator.clipboard.writeText(ta.value);
+    setStatus("Copied export to clipboard", true);
+  } catch {
+    document.execCommand("copy");
+    setStatus("Copied export", true);
+  }
+};
+
+renderNav();
+render();
+</script>
+</body>
+</html>

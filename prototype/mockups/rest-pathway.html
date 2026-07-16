@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Rewire — Rest pathway · mockups</title>
+<style>
+  :root {
+    --text-1: #F4F2EC; --text-2: #8E8E9E; --text-3: #55555F;
+    --accept: #3EDDC5; --notice: #FFC24B; --choose: #8B7BFF; --ember: #FF5C39;
+    --ui: "SF Pro Text", -apple-system, "Segoe UI", system-ui, sans-serif;
+    --voice: "New York", "Iowan Old Style", Georgia, serif;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-font-smoothing: antialiased; }
+  body {
+    min-height: 100vh; background: #101016; color: var(--text-1); font-family: var(--ui);
+    padding: 56px 28px 80px;
+  }
+  .wrap { max-width: 980px; margin: 0 auto; }
+  .eyebrow {
+    font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase;
+    color: var(--text-3); font-weight: 600; margin-bottom: 12px;
+  }
+  h1 { font-family: var(--voice); font-size: 32px; font-weight: 500; margin-bottom: 12px; }
+  .lede { font-size: 15px; color: var(--text-2); line-height: 1.55; max-width: 560px; margin-bottom: 40px; }
+  .grid { display: grid; gap: 14px; }
+  @media (min-width: 720px) { .grid { grid-template-columns: 1fr 1fr 1fr; } }
+  a.card {
+    display: block; text-decoration: none; color: inherit;
+    border-radius: 22px; padding: 24px 20px 20px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+    transition: border-color 0.2s, transform 0.25s cubic-bezier(0.22,1,0.36,1);
+    min-height: 220px;
+  }
+  a.card:hover { border-color: rgba(255,255,255,0.16); transform: translateY(-3px); }
+  a.card .n {
+    font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase;
+    font-weight: 600; margin-bottom: 12px;
+  }
+  a.card h2 { font-family: var(--voice); font-size: 22px; font-weight: 500; margin-bottom: 10px; }
+  a.card p { font-size: 13px; color: var(--text-2); line-height: 1.5; }
+  a.card .gesture {
+    margin-top: 18px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.06);
+    font-size: 11px; color: var(--text-3); letter-spacing: 0.08em; text-transform: uppercase;
+    font-weight: 600;
+  }
+  .note {
+    margin-top: 40px; font-size: 13px; color: var(--text-3); line-height: 1.55; max-width: 560px;
+  }
+  .note strong { color: var(--text-2); font-weight: 600; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="eyebrow">Design audit · resting affordance</div>
+  <h1>How do you set a pathway down?</h1>
+  <p class="lede">
+    Long-press menus fail in the web preview and hide from memory.
+    Three ways to make “rest” as obvious as the moon that holds resting pathways —
+    without turning the garden into a settings screen.
+  </p>
+
+  <div class="grid">
+    <a class="card" href="rest-pathway-a.html">
+      <div class="n" style="color:var(--choose)">Mockup A</div>
+      <h2>Quiet moon on the card</h2>
+      <p>A soft moon sits beside the spark. Tap it → a breath of confirmation → the card dissolves into the header moon.</p>
+      <div class="gesture">Tap moon · confirm</div>
+    </a>
+    <a class="card" href="rest-pathway-b.html">
+      <div class="n" style="color:var(--accept)">Mockup B</div>
+      <h2>Swipe to rest</h2>
+      <p>Native trailing action. The card itself teaches the gesture — reveal Rest, release past the threshold, done.</p>
+      <div class="gesture">Swipe left · release</div>
+    </a>
+    <a class="card" href="rest-pathway-c.html">
+      <div class="n" style="color:var(--notice)">Mockup C</div>
+      <h2>Tend the garden</h2>
+      <p>One quiet “Tend” enters arrangement mode. Moons bloom on every card. Tap to rest. Done returns you to practice.</p>
+      <div class="gesture">Tend · tap moon · Done</div>
+    </a>
+  </div>
+
+  <p class="note">
+    <strong>Design brief for each demo:</strong> try resting “Road rage.”
+    Watch the moon in the header receive it. Nothing should feel like delete —
+    like setting something down for later.
+  </p>
+</div>
+</body>
+</html>

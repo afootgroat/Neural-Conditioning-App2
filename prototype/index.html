@@ -72,14 +72,97 @@
   #stats .stat .v { font-size: 26px; font-weight: 700; color: var(--text-1); font-family: var(--ui); }
   #stats .stat .l { font-size: 10px; color: var(--text-3); margin-top: 4px; }
   #stats .sep { width: 1px; height: 30px; background: var(--hairline); margin: auto 18px auto 0; }
-  .card { padding: 20px; margin-bottom: 14px; cursor: pointer; transition: transform 0.2s cubic-bezier(0.3,1.4,0.6,1); }
+  .card {
+    padding: 20px; margin-bottom: 14px; cursor: pointer;
+    transition: transform 0.2s cubic-bezier(0.3,1.4,0.6,1), opacity 0.45s, filter 0.45s;
+    transform-origin: 92% 8%;
+  }
   .card:active { transform: scale(0.98); }
-  .card .row1 { display: flex; justify-content: space-between; align-items: baseline; }
-  .card .name { font-size: 19px; font-weight: 600; color: var(--text-1); }
+  .card.leaving {
+    opacity: 0; transform: translate(48px, -220px) scale(0.18); filter: blur(2px);
+    pointer-events: none;
+  }
+  .card .row1 { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .card .name { font-size: 19px; font-weight: 600; color: var(--text-1); flex: 1; min-width: 0; }
+  .card .tools { display: flex; align-items: center; gap: 4px; flex: none; }
   .card .spark { font-size: 12px; display: flex; gap: 5px; align-items: center; }
+  .card .card-moon {
+    width: 32px; height: 32px; border-radius: 50%; border: none; cursor: pointer;
+    background: rgba(255,255,255,0.04); color: var(--text-3); font-size: 14px;
+    display: grid; place-items: center; flex: none;
+    transition: color 0.2s, background 0.2s, transform 0.15s, box-shadow 0.35s;
+  }
+  .card .card-moon:hover {
+    color: var(--text-2); background: rgba(255,255,255,0.08);
+  }
+  .card .card-moon:active { transform: scale(0.88); }
   .card .row2 { display: flex; justify-content: space-between; margin: 16px 0; align-items: center; }
   .card .stage-l { font-size: 10px; }
   .card .togo { font-size: 11px; color: var(--text-3); font-weight: 500; }
+  #btn-archive.has-rest {
+    color: var(--text-2);
+    border: 1px solid color-mix(in srgb, var(--choose) 40%, transparent);
+    box-shadow: 0 0 18px color-mix(in srgb, var(--choose) 25%, transparent);
+  }
+  #btn-archive.receive { animation: moonCatch 0.7s cubic-bezier(0.22,1,0.36,1); }
+  @keyframes moonCatch {
+    0% { transform: scale(1); }
+    35% { transform: scale(1.12); color: var(--choose); }
+    100% { transform: scale(1); }
+  }
+
+  /* Rest confirm (Mockup A) */
+  #rest-scrim {
+    display: none; position: absolute; inset: 0; z-index: 48;
+    background: rgba(0,0,0,0.45);
+  }
+  #rest-scrim.visible { display: block; animation: archiveScrimIn 0.3s ease both; }
+  #rest-sheet {
+    display: none; position: absolute; left: 16px; right: 16px; bottom: 28px; z-index: 49;
+    border-radius: 28px; padding: 28px 24px 22px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.06), transparent 40%), #14141c;
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+  #rest-sheet.visible {
+    display: block; animation: restSheetUp 0.48s cubic-bezier(0.22,1,0.36,1) both;
+  }
+  @keyframes restSheetUp {
+    from { transform: translateY(120%); opacity: 0.6; }
+    to { transform: none; opacity: 1; }
+  }
+  #rest-sheet .glyph {
+    width: 48px; height: 48px; border-radius: 50%;
+    display: grid; place-items: center; font-size: 22px; margin-bottom: 16px;
+    background: color-mix(in srgb, var(--choose) 14%, transparent); color: var(--choose);
+    box-shadow: 0 0 24px color-mix(in srgb, var(--choose) 20%, transparent);
+  }
+  #rest-sheet h3 {
+    font-family: var(--voice); font-size: 24px; font-weight: 500; margin-bottom: 8px; color: var(--text-1);
+  }
+  #rest-sheet p {
+    font-size: 14px; color: var(--text-2); line-height: 1.5; margin-bottom: 22px;
+  }
+  #rest-sheet .actions { display: flex; gap: 10px; }
+  #rest-sheet .actions button {
+    flex: 1; height: 48px; border-radius: 24px; border: none; cursor: pointer;
+    font-size: 15px; font-weight: 600; font-family: var(--ui);
+  }
+  #rest-sheet .keep {
+    background: rgba(255,255,255,0.06); color: var(--text-1); border: 1px solid var(--hairline) !important;
+  }
+  #rest-sheet .rest-go {
+    background: color-mix(in srgb, var(--choose) 85%, #fff); color: var(--ink);
+  }
+  #rest-toast {
+    position: absolute; left: 50%; bottom: 100px; z-index: 50;
+    transform: translate(-50%, 16px);
+    padding: 12px 18px; border-radius: 20px;
+    background: rgba(20,20,28,0.92); border: 1px solid var(--hairline);
+    font-family: var(--voice); font-style: italic; font-size: 14px; color: var(--text-2);
+    white-space: nowrap; opacity: 0; pointer-events: none;
+    transition: opacity 0.35s, transform 0.45s cubic-bezier(0.22,1,0.36,1);
+  }
+  #rest-toast.on { opacity: 1; transform: translate(-50%, 0); }
   .thread { position: relative; height: 3px; border-radius: 2px; background: rgba(255,255,255,0.08); }
   .thread .fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 2px; }
   .thread .head { position: absolute; top: -0.5px; width: 4px; height: 4px; border-radius: 50%; background: #fff; }
@@ -100,6 +183,22 @@
   #training .title { text-align: center; }
   #training .title .n { font-size: 15px; font-weight: 600; color: var(--text-1); }
   #training .title .m { font-size: 10px; margin-top: 3px; }
+
+  /* Blueprint edit — quiet twin of dismiss */
+  .edit-btn {
+    --edit-hue: var(--choose);
+    width: 44px; height: 44px; border-radius: 50%;
+    border: none; cursor: pointer; padding: 0;
+    background: rgba(255,255,255,0.05);
+    display: grid; place-items: center;
+    transition: transform 0.15s cubic-bezier(0.3,1.4,0.6,1);
+  }
+  .edit-btn .glyph {
+    font-size: 15px; font-weight: 500; line-height: 1;
+    background: linear-gradient(160deg, var(--text-2), color-mix(in srgb, var(--edit-hue) 72%, var(--text-2)));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .edit-btn:active { transform: scale(0.92); }
   #stage-label { position: absolute; top: 176px; left: 0; right: 0; text-align: center; z-index: 20; pointer-events: none; transition: opacity 0.35s; }
   #training.cue-open #stage-label, #training.cue-open #counters, #training.cue-open .header,
   #training.cue-open #hold-reveal,
@@ -384,12 +483,14 @@
     <!-- TRAINING -->
     <div class="screen" id="training">
       <div class="header">
-        <button class="icon-btn" id="btn-close-training">⌄</button>
+        <button class="icon-btn" id="btn-close-training" title="Back" aria-label="Back" style="font-size:22px;font-weight:500">‹</button>
         <div class="title">
           <div class="n" id="t-name"></div>
           <div class="m tracked" id="t-maturity"></div>
         </div>
-        <div style="width:44px"></div>
+        <button class="edit-btn" id="btn-edit-pathway" type="button" title="Edit blueprint" aria-label="Edit blueprint">
+          <span class="glyph">✎</span>
+        </button>
       </div>
       <div id="stage-label">
         <div id="stage-name" class="tracked"></div>
@@ -446,6 +547,19 @@
       <div class="sub">Pathways you've set down. They remember everything.</div>
       <div id="rest-list"></div>
     </div>
+
+    <!-- REST CONFIRM (Mockup A) -->
+    <div id="rest-scrim" aria-hidden="true"></div>
+    <div id="rest-sheet" role="dialog" aria-modal="true">
+      <div class="glyph">☾</div>
+      <h3 id="rest-title">Rest this pathway?</h3>
+      <p>It’ll wait quietly with the others. You can wake it anytime — nothing is lost.</p>
+      <div class="actions">
+        <button class="keep" type="button" id="btn-rest-keep">Keep</button>
+        <button class="rest-go" type="button" id="btn-rest-go">Rest</button>
+      </div>
+    </div>
+    <div id="rest-toast"></div>
   </div>
 
   <!-- DEBUG -->
@@ -493,14 +607,14 @@ const HUES = {
   tide: "#3EDDC5", glacier: "#6FB8FF", iris: "#8B7BFF", orchid: "#D98BF5",
 };
 const EMOTIONS = [
-  { name: "Calm", hue: "tide", mantras: ["This moment is not an emergency.", "I can slow everything down.", "Still water runs beneath this."] },
+  { name: "Calm", hue: "tide", mantras: ["This moment is not an emergency.", "I can slow everything down.", "Soft shoulders, open breath."] },
   { name: "Compassion", hue: "dawn", mantras: ["They are carrying something too.", "Soft heart, steady hands.", "I can be kind before I am right."] },
-  { name: "Curiosity", hue: "glacier", mantras: ["Interesting — what is really happening here?", "What else could this mean?", "I wonder what I'll do next."] },
-  { name: "Gratitude", hue: "honey", mantras: ["Even this is part of a good life.", "I have more than this moment is taking.", "Thank you, anyway."] },
-  { name: "Patience", hue: "moss", mantras: ["There is time inside this moment.", "Nothing needs to happen yet.", "I move at my own weather."] },
-  { name: "Confidence", hue: "ember", mantras: ["I have handled harder than this.", "My ground does not move.", "I choose my next move."] },
-  { name: "Playfulness", hue: "orchid", mantras: ["This is a strange little game.", "Lightly, lightly.", "I can hold this loosely."] },
-  { name: "Acceptance", hue: "iris", mantras: ["It is allowed to be like this.", "I don't argue with what already is.", "Here is where I begin."] },
+  { name: "Curiosity", hue: "glacier", mantras: ["Interesting — what is really happening here?", "What else could this mean?", "What would a more useful perspective be?"] },
+  { name: "Gratitude", hue: "honey", mantras: ["Even this is part of a good life.", "One small mercy is enough to start.", "Thank you, anyway."] },
+  { name: "Patience", hue: "moss", mantras: ["I can wait one more breath.", "Nothing needs to happen yet.", "Slow is still forward."] },
+  { name: "Confidence", hue: "ember", mantras: ["I act from the center, not the edge.", "My ground does not move.", "I choose my next move."] },
+  { name: "Playfulness", hue: "orchid", mantras: ["This is a strange little game.", "A little lightness won't break me.", "I can smile at the absurdity."] },
+  { name: "Acceptance", hue: "iris", mantras: ["Letting it be frees my next move.", "I don't argue with what already is.", "Resistance is optional."] },
 ];
 
 const pathways = [
@@ -724,6 +838,7 @@ function hexToRgb(hex) {
 const NAME_MAX = 35;
 const STIMULUS_MAX = 35;
 const REACTION_MAX = 35;
+const MANTRA_MAX = 40;
 const PRACTICE = {
   noticeL1: "thoughts and emotions arise",
   noticeL2: "on their own",
@@ -751,6 +866,8 @@ const state = {
   wizardStep: 0,
   draft: null,
   fieldLimitShown: {},
+  editingId: null,
+  wizardReturn: "home",
 };
 const clock = { t: 0, last: performance.now() };
 
@@ -893,42 +1010,119 @@ function renderHome() {
   document.getElementById("greeting").textContent = fmtGreeting();
   const practiced = pathways.filter(p => p.today > 0).length;
   document.getElementById("home-sub").textContent =
-    practiced > 0 ? `You've practiced ${practiced} of ${pathways.length} pathways today.`
-                  : "The mind rewires one rep at a time.";
+    pathways.length === 0 ? "All pathways are resting."
+    : practiced > 0 ? `You've practiced ${practiced} of ${pathways.length} pathways today.`
+    : "The mind rewires one rep at a time.";
   const totalToday = pathways.reduce((s,p) => s+p.today, 0);
-  const totalLife = pathways.reduce((s,p) => s+p.lifetime, 0) + 214;
+  const archivedLife = archived.reduce((s,a) => s + (a.lifetime || 0), 0);
+  const totalLife = pathways.reduce((s,p) => s+p.lifetime, 0) + archivedLife;
   document.getElementById("stats").innerHTML = `
     <div class="stat"><div class="v mono">${pathways.length}</div><div class="l tracked">Pathways</div></div>
     <div class="sep"></div>
     <div class="stat"><div class="v mono">${totalToday}</div><div class="l tracked">Reps today</div></div>
     <div class="sep"></div>
     <div class="stat"><div class="v mono">${totalLife}</div><div class="l tracked">Lifetime</div></div>`;
+
+  const moonBtn = document.getElementById("btn-archive");
+  moonBtn.classList.toggle("has-rest", archived.length > 0);
+
   const cards = document.getElementById("cards");
   cards.innerHTML = "";
-  for (const p of pathways) {
+  pathways.forEach((p) => {
     const hue = HUES[p.hue];
     const m = maturityFor(p.lifetime), n = nextMaturity(p.lifetime);
     const prog = progressToNext(p.lifetime);
-    const el = document.createElement("div");
-    el.className = "glass card";
-    el.innerHTML = `
-      <div class="row1">
-        <div class="name">${p.name}</div>
-        <div class="spark" style="color:${p.today>0?hue:"var(--text-3)"}">
-          ${p.today>0 ? `<span class="mono" style="font-weight:600">${p.today}</span><span style="text-shadow:0 0 8px ${hue}">✦</span>` : `<span style="opacity:.6">◌</span>`}
+    const wrap = document.createElement("div");
+    wrap.className = "card-wrap";
+    wrap.innerHTML = `
+      <div class="glass card" data-id="${p.id}">
+        <div class="row1">
+          <div class="name">${p.name}</div>
+          <div class="tools">
+            <div class="spark" style="color:${p.today>0?hue:"var(--text-3)"}">
+              ${p.today>0 ? `<span class="mono" style="font-weight:600">${p.today}</span><span style="text-shadow:0 0 8px ${hue}">✦</span>` : `<span style="opacity:.6">◌</span>`}
+            </div>
+            <button class="card-moon" type="button" title="Rest pathway" aria-label="Rest ${p.name}">☾</button>
+          </div>
         </div>
-      </div>
-      <div class="row2">
-        <div class="stage-l tracked" style="color:${hue}">${m.title}</div>
-        <div class="togo mono">${n ? (n.threshold-p.lifetime)+" to go" : "∞"}</div>
-      </div>
-      <div class="thread">
-        <div class="fill" style="width:${Math.max(1.5,prog*100)}%;background:linear-gradient(90deg,${hue}40,${hue});box-shadow:0 0 6px ${hue}b0"></div>
-        <div class="head" style="left:calc(${Math.max(1.5,prog*100)}% - 4px);box-shadow:0 0 8px ${hue}"></div>
+        <div class="row2">
+          <div class="stage-l tracked" style="color:${hue}">${m.title}</div>
+          <div class="togo mono">${n ? (n.threshold-p.lifetime)+" to go" : "∞"}</div>
+        </div>
+        <div class="thread">
+          <div class="fill" style="width:${Math.max(1.5,prog*100)}%;background:linear-gradient(90deg,${hue}40,${hue});box-shadow:0 0 6px ${hue}b0"></div>
+          <div class="head" style="left:calc(${Math.max(1.5,prog*100)}% - 4px);box-shadow:0 0 8px ${hue}"></div>
+        </div>
       </div>`;
-    el.onclick = () => openTraining(p);
-    cards.appendChild(el);
+    const card = wrap.querySelector(".card");
+    const moon = wrap.querySelector(".card-moon");
+    card.onclick = () => openTraining(p);
+    moon.onclick = (e) => {
+      e.stopPropagation();
+      openRestConfirm(p, card);
+    };
+    cards.appendChild(wrap);
+  });
+}
+
+let pendingRest = null;
+let pendingRestCard = null;
+
+function openRestConfirm(pathway, cardEl) {
+  pendingRest = pathway;
+  pendingRestCard = cardEl;
+  document.getElementById("rest-title").textContent = `Rest “${pathway.name}”?`;
+  document.getElementById("rest-scrim").classList.add("visible");
+  document.getElementById("rest-scrim").setAttribute("aria-hidden", "false");
+  document.getElementById("rest-sheet").classList.add("visible");
+}
+
+function closeRestConfirm() {
+  pendingRest = null;
+  pendingRestCard = null;
+  document.getElementById("rest-scrim").classList.remove("visible");
+  document.getElementById("rest-scrim").setAttribute("aria-hidden", "true");
+  document.getElementById("rest-sheet").classList.remove("visible");
+}
+
+function commitRest() {
+  if (!pendingRest) return;
+  const p = pendingRest;
+  const card = pendingRestCard;
+  closeRestConfirm();
+
+  const finish = () => {
+    const idx = pathways.findIndex(x => x.id === p.id);
+    if (idx < 0) return;
+    pathways.splice(idx, 1);
+    archived.unshift({
+      name: p.name,
+      lifetime: p.lifetime,
+      maturity: maturityFor(p.lifetime).title,
+      hue: p.hue,
+      full: p,
+    });
+    const moon = document.getElementById("btn-archive");
+    moon.classList.add("receive");
+    setTimeout(() => moon.classList.remove("receive"), 700);
+    renderHome();
+    showRestToast(`“${p.name}” is resting.`);
+  };
+
+  if (card) {
+    card.classList.add("leaving");
+    setTimeout(finish, 480);
+  } else {
+    finish();
   }
+}
+
+function showRestToast(msg) {
+  const t = document.getElementById("rest-toast");
+  t.textContent = msg;
+  t.classList.add("on");
+  clearTimeout(showRestToast._t);
+  showRestToast._t = setTimeout(() => t.classList.remove("on"), 2400);
 }
 
 /* =========================================================================
@@ -967,6 +1161,7 @@ function renderTraining() {
   const n = nextMaturity(p.lifetime);
   document.getElementById("next-stage").textContent =
     n ? `${n.threshold - p.lifetime} reps to ${n.title}` : MATURITY[4].meaning;
+  document.getElementById("btn-edit-pathway").style.setProperty("--edit-hue", hue);
   renderCue();
 }
 function renderCue() {
@@ -1047,8 +1242,26 @@ orbHit.addEventListener("pointerleave", () => endPress(true));
    DOM — Wizard
    ========================================================================= */
 function openWizard() {
+  state.editingId = null;
+  state.wizardReturn = "home";
   state.draft = { name: "", stimulus: "", feelings: "", thoughts: "", doing: "",
                   emotion: "", hue: "iris", mantra: "", custom: "" };
+  state.wizardStep = 0;
+  state.fieldLimitShown = {};
+  showScreen("wizard");
+  renderWizard(true);
+}
+function openWizardEdit(p) {
+  state.editingId = p.id;
+  state.wizardReturn = "training";
+  const preset = EMOTIONS.find(e => e.name === p.emotion);
+  const isPreset = preset && preset.mantras.includes(p.mantra);
+  state.draft = {
+    name: p.name, stimulus: p.stimulus,
+    feelings: p.feelings, thoughts: p.thoughts, doing: p.doing,
+    emotion: p.emotion, hue: p.hue, mantra: p.mantra,
+    custom: isPreset ? "" : p.mantra,
+  };
   state.wizardStep = 0;
   state.fieldLimitShown = {};
   showScreen("wizard");
@@ -1145,9 +1358,13 @@ function renderWizard(forward) {
           style="${sel?`background:${h}1a;border-color:${h}80`:""}">
           <span>“${m}”</span><span class="chk" style="color:${h}">✓</span></button>`;
       }).join("")}
-      <div class="ink-field" style="--hue:${h};margin-top:16px">
-        <input id="f-custom" placeholder="Or write your own…" value="${d.custom.replace(/"/g,"&quot;")}" autocomplete="off">
+      <div class="ink-field name-limit" id="custom-field" style="--hue:${h};margin-top:16px">
+        <input id="f-custom" placeholder="Or write your own…" value="${d.custom.replace(/"/g,"&quot;")}" autocomplete="off" maxlength="${MANTRA_MAX}">
         <div class="line"></div>
+        <div class="name-meter">
+          <div class="whisper" id="custom-whisper">Short enough to say under pressure.</div>
+          <div class="count" id="custom-count"><span class="dot"></span><span class="n">10</span></div>
+        </div>
       </div>`;
     }
   }
@@ -1173,16 +1390,10 @@ function renderWizard(forward) {
   bindReactionField("f-doing", "doing");
   const custom = document.getElementById("f-custom");
   if (custom) {
-    custom.oninput = () => {
-      d.custom = custom.value;
-      if (custom.value.trim()) d.mantra = custom.value.trim();
-      else d.mantra = "";
-      // deselect preset rows visually
+    bindLimitedField("f-custom", "custom", MANTRA_MAX, "custom-field", "custom-count", "custom-whisper", (value) => {
+      d.mantra = value.trim() || "";
       host.querySelectorAll(".mrow").forEach(b => { b.classList.remove("sel"); b.style.background=""; b.style.borderColor=""; });
-      refreshContinue();
-    };
-    custom.onfocus = () => custom.closest(".ink-field").classList.add("focus");
-    custom.onblur = () => custom.closest(".ink-field").classList.remove("focus");
+    });
   }
   host.querySelectorAll(".echip").forEach(b => b.onclick = () => {
     const e = EMOTIONS.find(x => x.name === b.dataset.e);
@@ -1212,7 +1423,7 @@ function updateLimitedMeter(fieldId, countId, whisperId, len, max, flagKey) {
   field.classList.toggle("at-limit", atLimit);
 }
 
-function bindLimitedField(inputId, draftKey, max, fieldId, countId, whisperId) {
+function bindLimitedField(inputId, draftKey, max, fieldId, countId, whisperId, onUpdate) {
   const el = document.getElementById(inputId);
   if (!el) return;
   const field = document.getElementById(fieldId) || el.closest(".ink-field");
@@ -1234,6 +1445,7 @@ function bindLimitedField(inputId, draftKey, max, fieldId, countId, whisperId) {
     }
     if (value.length < max) state.fieldLimitShown[draftKey] = false;
     state.draft[draftKey] = value;
+    if (onUpdate) onUpdate(value);
     sync(value.length);
     if (value.length >= max && prevLen < max) {
       state.fieldLimitShown[draftKey] = true;
@@ -1305,7 +1517,8 @@ function renderBlueprint() {
 function refreshContinue() {
   const btn = document.getElementById("btn-continue");
   const s = state.wizardStep;
-  btn.textContent = s < 4 ? "Continue" : "Begin training";
+  const editing = state.editingId != null;
+  btn.textContent = s < 4 ? "Continue" : (editing ? "Save blueprint" : "Begin training");
   btn.disabled = !wizardValid();
   btn.style.background = HUES[state.draft.hue];
   btn.style.boxShadow = `0 4px 16px ${HUES[state.draft.hue]}73`;
@@ -1315,31 +1528,84 @@ document.getElementById("btn-continue").onclick = () => {
   if (state.wizardStep < 4) { state.wizardStep++; renderWizard(true); }
   else {
     const d = state.draft;
-    pathways.push({ id: Date.now(), name: d.name.trim(), stimulus: d.stimulus.trim(),
-      feelings: d.feelings.trim(), thoughts: d.thoughts.trim(), doing: d.doing.trim(),
-      emotion: d.emotion, hue: d.hue, mantra: d.mantra, lifetime: 0, today: 0 });
-    renderHome(); showScreen("home");
+    if (state.editingId != null) {
+      const p = pathways.find(x => x.id === state.editingId) || state.current;
+      if (p) {
+        Object.assign(p, {
+          name: d.name.trim(), stimulus: d.stimulus.trim(),
+          feelings: d.feelings.trim(), thoughts: d.thoughts.trim(), doing: d.doing.trim(),
+          emotion: d.emotion, hue: d.hue, mantra: d.mantra,
+        });
+        state.current = p;
+      }
+      state.editingId = null;
+      showScreen(state.wizardReturn || "training");
+      if (state.wizardReturn === "training") renderTraining();
+      else renderHome();
+    } else {
+      pathways.push({ id: Date.now(), name: d.name.trim(), stimulus: d.stimulus.trim(),
+        feelings: d.feelings.trim(), thoughts: d.thoughts.trim(), doing: d.doing.trim(),
+        emotion: d.emotion, hue: d.hue, mantra: d.mantra, lifetime: 0, today: 0 });
+      renderHome(); showScreen("home");
+    }
   }
 };
 document.getElementById("btn-wizard-back").onclick = () => {
   if (state.wizardStep > 0) { state.wizardStep--; renderWizard(false); }
-  else showScreen("home");
+  else {
+    const ret = state.wizardReturn || "home";
+    state.editingId = null;
+    showScreen(ret);
+    if (ret === "training") renderTraining();
+  }
+};
+document.getElementById("btn-edit-pathway").onclick = (e) => {
+  e.stopPropagation();
+  if (state.current) openWizardEdit(state.current);
 };
 
 /* =========================================================================
    DOM — Archive
    ========================================================================= */
 function renderArchive() {
-  document.getElementById("rest-list").innerHTML = archived.map(a => `
-    <div class="glass rest-card">
+  const host = document.getElementById("rest-list");
+  host.innerHTML = archived.map((a, i) => `
+    <div class="glass rest-card" data-i="${i}">
       <span class="dot" style="width:8px;height:8px;border-radius:4px;background:${HUES[a.hue]}80"></span>
       <div style="flex:1">
         <div class="name">${a.name}</div>
         <div class="meta mono">${a.maturity} · ${a.lifetime} reps</div>
       </div>
-      <button class="icon-btn" style="width:40px;height:40px;color:${HUES[a.hue]};background:${HUES[a.hue]}1f">☀</button>
-      <button class="icon-btn" style="width:40px;height:40px;font-size:13px">✕</button>
+      <button class="icon-btn wake" type="button" title="Wake"
+        style="width:40px;height:40px;color:${HUES[a.hue]};background:${HUES[a.hue]}1f">☀</button>
+      <button class="icon-btn release" type="button" title="Release"
+        style="width:40px;height:40px;font-size:13px">✕</button>
     </div>`).join("");
+  host.querySelectorAll(".wake").forEach(btn => {
+    btn.onclick = () => {
+      const i = +btn.closest(".rest-card").dataset.i;
+      const a = archived[i];
+      if (!a) return;
+      archived.splice(i, 1);
+      if (a.full) pathways.push(a.full);
+      else pathways.push({
+        id: Date.now(), name: a.name, stimulus: "", feelings: "", thoughts: "", doing: "",
+        emotion: "", hue: a.hue, mantra: "", lifetime: a.lifetime || 0, today: 0,
+      });
+      renderArchive();
+      renderHome();
+      if (archived.length === 0) closeArchive();
+    };
+  });
+  host.querySelectorAll(".release").forEach(btn => {
+    btn.onclick = () => {
+      const i = +btn.closest(".rest-card").dataset.i;
+      archived.splice(i, 1);
+      renderArchive();
+      renderHome();
+      if (archived.length === 0) closeArchive();
+    };
+  });
 }
 function isArchiveOpen() {
   return document.getElementById("archive").classList.contains("visible");
@@ -1365,6 +1631,9 @@ document.getElementById("btn-archive").onclick = (e) => {
 };
 document.getElementById("archive-scrim").onclick = closeArchive;
 document.getElementById("archive").onclick = (e) => e.stopPropagation();
+document.getElementById("rest-scrim").onclick = closeRestConfirm;
+document.getElementById("btn-rest-keep").onclick = closeRestConfirm;
+document.getElementById("btn-rest-go").onclick = commitRest;
 document.getElementById("phone").addEventListener("click", e => {
   if (!isArchiveOpen()) return;
   if (document.getElementById("archive").contains(e.target)) return;
@@ -1379,6 +1648,7 @@ function showScreen(name) {
   state.screen = name;
   // Any screen change dismisses the archive sheet (it's a modal over Home).
   closeArchive();
+  closeRestConfirm();
   document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
   document.getElementById(name).classList.add("active");
   if (name === "home") renderHome();

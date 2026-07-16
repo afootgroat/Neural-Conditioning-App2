@@ -20,6 +20,7 @@ struct TrainingView: View {
     @State private var cueVisible = false
     @State private var celebration: MaturityStage? = nil
     @State private var surgeDate: Date? = nil
+    @State private var editing: WizardMode? = nil
 
     private var pathway: Pathway? { store.pathway(id: pathwayID) }
 
@@ -35,6 +36,9 @@ struct TrainingView: View {
         .background(Ink.base)
         .toolbarVisibility(.hidden, for: .navigationBar)
         .statusBarHidden()
+        .fullScreenCover(item: $editing) { mode in
+            WizardView(mode: mode)
+        }
     }
 
     private func content(for pathway: Pathway) -> some View {
@@ -89,13 +93,14 @@ struct TrainingView: View {
             Button {
                 dismiss()
             } label: {
-                Image(systemName: "chevron.down")
-                    .font(.system(size: 15, weight: .semibold))
+                Image(systemName: "chevron.left")
+                    .font(.system(size: 16, weight: .semibold))
                     .foregroundStyle(Ink.textSecondary)
                     .frame(width: 44, height: 44)
                     .background(Circle().fill(.white.opacity(0.06)))
             }
             .buttonStyle(PressableStyle(scale: 0.92))
+            .accessibilityLabel("Back")
 
             Spacer()
 
@@ -109,8 +114,9 @@ struct TrainingView: View {
 
             Spacer()
 
-            // Balance the close button so the title is truly centered.
-            Color.clear.frame(width: 44, height: 44)
+            BlueprintEditButton(hue: pathway.hue.color) {
+                editing = .edit(pathway)
+            }
         }
         .padding(.top, 12)
     }

@@ -13,7 +13,7 @@ struct EmotionPreset: Identifiable, Equatable {
         EmotionPreset(name: "Calm", hue: .tide, mantras: [
             "This moment is not an emergency.",
             "I can slow everything down.",
-            "Still water runs beneath this.",
+            "Soft shoulders, open breath.",
         ]),
         EmotionPreset(name: "Compassion", hue: .dawn, mantras: [
             "They are carrying something too.",
@@ -23,32 +23,32 @@ struct EmotionPreset: Identifiable, Equatable {
         EmotionPreset(name: "Curiosity", hue: .glacier, mantras: [
             "Interesting — what is really happening here?",
             "What else could this mean?",
-            "I wonder what I'll do next.",
+            "What would a more useful perspective be?",
         ]),
         EmotionPreset(name: "Gratitude", hue: .honey, mantras: [
             "Even this is part of a good life.",
-            "I have more than this moment is taking.",
+            "One small mercy is enough to start.",
             "Thank you, anyway.",
         ]),
         EmotionPreset(name: "Patience", hue: .moss, mantras: [
-            "There is time inside this moment.",
+            "I can wait one more breath.",
             "Nothing needs to happen yet.",
-            "I move at my own weather.",
+            "Slow is still forward.",
         ]),
         EmotionPreset(name: "Confidence", hue: .ember, mantras: [
-            "I have handled harder than this.",
+            "I act from the center, not the edge.",
             "My ground does not move.",
             "I choose my next move.",
         ]),
         EmotionPreset(name: "Playfulness", hue: .orchid, mantras: [
             "This is a strange little game.",
-            "Lightly, lightly.",
-            "I can hold this loosely.",
+            "A little lightness won't break me.",
+            "I can smile at the absurdity.",
         ]),
         EmotionPreset(name: "Acceptance", hue: .iris, mantras: [
-            "It is allowed to be like this.",
+            "Letting it be frees my next move.",
             "I don't argue with what already is.",
-            "Here is where I begin.",
+            "Resistance is optional.",
         ]),
     ]
 

@@ -171,7 +171,11 @@ struct WizardView: View {
         final.oldFeelings = String(final.oldFeelings.trimmed.prefix(Metrics.reactionMaxLength))
         final.oldThoughts = String(final.oldThoughts.trimmed.prefix(Metrics.reactionMaxLength))
         final.oldBehavior = String(final.oldBehavior.trimmed.prefix(Metrics.reactionMaxLength))
-        final.mantra = final.mantra.trimmed
+        let trimmedMantra = final.mantra.trimmed
+        let isPresetMantra = EmotionPreset.all.contains { $0.mantras.contains(trimmedMantra) }
+        final.mantra = isPresetMantra
+            ? trimmedMantra
+            : String(trimmedMantra.prefix(Metrics.mantraMaxLength))
         if isEditing {
             store.update(final)
         } else {

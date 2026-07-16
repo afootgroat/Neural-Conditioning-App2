@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rewire — Rest A · Quiet moon</title>
+<style>
+  :root {
+    --ink: #07070C;
+    --raised: rgba(16,16,24,0.78);
+    --text-1: #F4F2EC; --text-2: #8E8E9E; --text-3: #55555F;
+    --hairline: rgba(255,255,255,0.08);
+    --tide: #4DB6C8; --ember: #E07A4F; --orchid: #B07BC8; --choose: #8B7BFF;
+    --ui: "SF Pro Text", -apple-system, "Segoe UI", system-ui, sans-serif;
+    --voice: "New York", "Iowan Old Style", Georgia, serif;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-font-smoothing: antialiased; }
+  html, body { min-height: 100%; background: #101016; font-family: var(--ui); color: var(--text-1); }
+  .stage {
+    min-height: 100vh; display: flex; flex-direction: column; align-items: center;
+    justify-content: center; gap: 28px; padding: 36px 20px 48px;
+  }
+  .meta { text-align: center; max-width: 400px; }
+  .meta .tag {
+    font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--choose); font-weight: 600; margin-bottom: 8px;
+  }
+  .meta h1 { font-family: var(--voice); font-size: 22px; font-weight: 500; margin-bottom: 6px; }
+  .meta p { font-size: 13px; color: var(--text-2); line-height: 1.5; }
+  .meta a {
+    display: inline-block; margin-top: 12px; font-size: 12px; color: var(--text-3);
+    text-decoration: none; letter-spacing: 0.04em;
+  }
+  .meta a:hover { color: var(--text-2); }
+
+  .phone {
+    position: relative; width: 390px; height: 844px; background: var(--ink);
+    border-radius: 54px; overflow: hidden; flex: none;
+    box-shadow: 0 0 0 10px #000, 0 0 0 12px #2a2a30, 0 40px 100px rgba(0,0,0,0.55);
+  }
+  .island {
+    position: absolute; top: 12px; left: 50%; transform: translateX(-50%);
+    width: 118px; height: 34px; background: #000; border-radius: 20px; z-index: 80;
+  }
+  .aurora {
+    position: absolute; inset: 0; z-index: 0; pointer-events: none;
+    background:
+      radial-gradient(ellipse 90% 55% at 18% 8%, rgba(77,182,200,0.14), transparent 55%),
+      radial-gradient(ellipse 70% 45% at 88% 28%, rgba(139,123,255,0.10), transparent 50%),
+      radial-gradient(ellipse 80% 50% at 50% 100%, rgba(224,122,79,0.06), transparent 55%),
+      var(--ink);
+    animation: aurora 20s ease-in-out infinite alternate;
+  }
+  @keyframes aurora {
+    from { transform: scale(1); filter: hue-rotate(0deg); }
+    to { transform: scale(1.04); filter: hue-rotate(10deg); }
+  }
+
+  .ui {
+    position: absolute; inset: 0; z-index: 10;
+    padding: 62px 24px 0; display: flex; flex-direction: column;
+  }
+
+  .head {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    gap: 16px; margin-bottom: 22px;
+  }
+  .greeting { font-family: var(--voice); font-size: 30px; font-weight: 500; letter-spacing: -0.02em; }
+  .sub { font-size: 13px; color: var(--text-2); margin-top: 6px; line-height: 1.4; }
+
+  .moon-btn {
+    width: 44px; height: 44px; border-radius: 50%;
+    background: rgba(255,255,255,0.05); border: 1px solid var(--hairline);
+    color: var(--text-3); font-size: 18px; cursor: pointer;
+    display: grid; place-items: center; flex: none;
+    position: relative; transition: color 0.35s, border-color 0.35s, background 0.35s, box-shadow 0.45s;
+  }
+  .moon-btn.has-rest {
+    color: var(--text-2);
+    border-color: color-mix(in srgb, var(--choose) 40%, transparent);
+    box-shadow: 0 0 18px color-mix(in srgb, var(--choose) 25%, transparent);
+  }
+  .moon-btn.receive {
+    animation: moonCatch 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  @keyframes moonCatch {
+    0% { transform: scale(1); }
+    35% { transform: scale(1.12); color: var(--choose); }
+    100% { transform: scale(1); }
+  }
+  .moon-btn .badge {
+    position: absolute; top: 6px; right: 6px; width: 7px; height: 7px;
+    border-radius: 50%; background: var(--choose);
+    box-shadow: 0 0 6px var(--choose);
+    opacity: 0; transform: scale(0.4);
+    transition: opacity 0.35s, transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .moon-btn.has-rest .badge { opacity: 1; transform: scale(1); }
+
+  .stats {
+    display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;
+    padding: 16px 14px; border-radius: 22px; margin-bottom: 20px;
+    background: linear-gradient(rgba(255,255,255,0.04), transparent), var(--raised);
+    border: 1px solid var(--hairline);
+  }
+  .stats .c { text-align: center; }
+  .stats .v { font-size: 20px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .stats .l {
+    font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--text-3); font-weight: 600; margin-top: 4px;
+  }
+
+  .cards { display: flex; flex-direction: column; gap: 12px; flex: 1; overflow: hidden; }
+
+  .pcard {
+    --hue: var(--tide);
+    position: relative;
+    border-radius: 26px;
+    background: linear-gradient(180deg, color-mix(in srgb, var(--hue) 8%, transparent), transparent 55%),
+                linear-gradient(rgba(255,255,255,0.035), transparent), var(--raised);
+    border: 1px solid color-mix(in srgb, var(--hue) 22%, var(--hairline));
+    padding: 18px 18px 16px;
+    transition: opacity 0.45s, transform 0.55s cubic-bezier(0.22, 1, 0.36, 1), filter 0.45s;
+    transform-origin: 92% 8%;
+  }
+  .pcard.leaving {
+    opacity: 0;
+    transform: translate(48px, -220px) scale(0.18);
+    filter: blur(2px);
+    pointer-events: none;
+  }
+  .pcard.gone { display: none; }
+
+  .pcard-top {
+    display: flex; align-items: flex-start; justify-content: space-between; gap: 10px;
+  }
+  .pname {
+    font-size: 18px; font-weight: 600; letter-spacing: -0.01em;
+    line-height: 1.2; padding-top: 2px;
+  }
+  .pcard-tools {
+    display: flex; align-items: center; gap: 4px; flex: none;
+  }
+  .spark {
+    font-size: 12px; color: var(--hue);
+    filter: drop-shadow(0 0 5px color-mix(in srgb, var(--hue) 70%, transparent));
+    width: 28px; height: 28px; display: grid; place-items: center;
+  }
+  .spark.dim { color: var(--text-3); filter: none; }
+
+  /* The quiet moon — always there, never loud */
+  .card-moon {
+    width: 32px; height: 32px; border-radius: 50%;
+    border: none; cursor: pointer;
+    background: transparent;
+    color: var(--text-3);
+    display: grid; place-items: center;
+    font-size: 15px; line-height: 1;
+    opacity: 0.55;
+    transition: opacity 0.25s, color 0.25s, background 0.25s, transform 0.3s cubic-bezier(0.22,1,0.36,1);
+  }
+  .card-moon:hover, .card-moon:focus-visible {
+    opacity: 1;
+    color: var(--text-2);
+    background: rgba(255,255,255,0.06);
+    outline: none;
+  }
+  .card-moon:active { transform: scale(0.9); }
+  .pcard:hover .card-moon { opacity: 0.85; }
+  /* First card coach — gentle pulse once */
+  .card-moon.hint {
+    opacity: 1;
+    color: color-mix(in srgb, var(--choose) 70%, var(--text-2));
+    animation: moonHint 2.8s ease-in-out 0.6s 2;
+  }
+  @keyframes moonHint {
+    0%, 100% { box-shadow: 0 0 0 0 transparent; }
+    50% { box-shadow: 0 0 0 6px color-mix(in srgb, var(--choose) 12%, transparent); }
+  }
+
+  .pcard-meta {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-top: 14px;
+  }
+  .stage-l {
+    font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
+    font-weight: 600; color: var(--hue);
+  }
+  .togo {
+    font-size: 11px; color: var(--text-3); font-variant-numeric: tabular-nums; font-weight: 500;
+  }
+  .thread {
+    margin-top: 12px; height: 3px; border-radius: 2px;
+    background: rgba(255,255,255,0.06); overflow: hidden;
+  }
+  .thread > i {
+    display: block; height: 100%; width: var(--p, 40%);
+    background: linear-gradient(90deg, color-mix(in srgb, var(--hue) 40%, transparent), var(--hue));
+    border-radius: 2px;
+    box-shadow: 0 0 8px color-mix(in srgb, var(--hue) 50%, transparent);
+  }
+
+  .coach {
+    margin-top: 8px; font-family: var(--voice); font-style: italic;
+    font-size: 12px; color: var(--text-3); line-height: 1.4;
+    opacity: 0; transform: translateY(4px);
+    transition: opacity 0.5s, transform 0.5s cubic-bezier(0.22,1,0.36,1);
+    pointer-events: none;
+  }
+  .coach.on { opacity: 1; transform: none; }
+  .coach.off { opacity: 0; }
+
+  .fab {
+    position: absolute; left: 50%; bottom: 36px; transform: translateX(-50%);
+    z-index: 20; height: 50px; padding: 0 22px; border: none; border-radius: 25px;
+    background: var(--text-1); color: var(--ink);
+    font-size: 15px; font-weight: 600; cursor: default; white-space: nowrap;
+    box-shadow: 0 8px 28px rgba(0,0,0,0.45);
+  }
+
+  /* Confirm sheet */
+  .scrim {
+    position: absolute; inset: 0; z-index: 40;
+    background: rgba(0,0,0,0.45);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.3s ease;
+  }
+  .scrim.on { opacity: 1; pointer-events: auto; }
+
+  .sheet {
+    position: absolute; left: 16px; right: 16px; bottom: 28px; z-index: 45;
+    border-radius: 28px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.06), transparent 40%), #14141c;
+    border: 1px solid rgba(255,255,255,0.1);
+    padding: 28px 24px 22px;
+    transform: translateY(120%);
+    transition: transform 0.48s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .sheet.on { transform: none; }
+  .sheet .glyph {
+    width: 48px; height: 48px; border-radius: 50%;
+    display: grid; place-items: center; font-size: 22px;
+    background: color-mix(in srgb, var(--choose) 14%, transparent);
+    color: var(--choose);
+    margin-bottom: 16px;
+    box-shadow: 0 0 24px color-mix(in srgb, var(--choose) 20%, transparent);
+  }
+  .sheet h3 {
+    font-family: var(--voice); font-size: 24px; font-weight: 500; margin-bottom: 8px;
+  }
+  .sheet p {
+    font-size: 14px; color: var(--text-2); line-height: 1.5; margin-bottom: 22px;
+  }
+  .sheet .actions { display: flex; gap: 10px; }
+  .sheet .actions button {
+    flex: 1; height: 48px; border-radius: 24px; border: none;
+    font-size: 15px; font-weight: 600; cursor: pointer;
+    transition: transform 0.15s, opacity 0.15s;
+  }
+  .sheet .actions button:active { transform: scale(0.97); }
+  .sheet .keep {
+    background: rgba(255,255,255,0.06); color: var(--text-1);
+    border: 1px solid var(--hairline) !important;
+  }
+  .sheet .rest {
+    background: color-mix(in srgb, var(--choose) 85%, #fff);
+    color: var(--ink);
+  }
+
+  .toast {
+    position: absolute; left: 50%; bottom: 100px; z-index: 50;
+    transform: translate(-50%, 16px);
+    padding: 12px 18px; border-radius: 20px;
+    background: rgba(20,20,28,0.92); border: 1px solid var(--hairline);
+    font-family: var(--voice); font-style: italic; font-size: 14px; color: var(--text-2);
+    white-space: nowrap;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.35s, transform 0.45s cubic-bezier(0.22,1,0.36,1);
+  }
+  .toast.on { opacity: 1; transform: translate(-50%, 0); }
+
+  .reset {
+    margin-top: 4px;
+    appearance: none; border: 1px solid var(--hairline); background: rgba(255,255,255,0.04);
+    color: var(--text-2); font-size: 12px; font-weight: 600; padding: 8px 14px;
+    border-radius: 999px; cursor: pointer;
+  }
+  .reset:hover { color: var(--text-1); border-color: rgba(255,255,255,0.14); }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="meta">
+    <div class="tag">Mockup A</div>
+    <h1>Quiet moon on the card</h1>
+    <p>Always visible, never shouting. Tap the moon on a card — confirm once — watch it settle into Resting.</p>
+    <a href="rest-pathway.html">← All rest mockups</a>
+  </div>
+
+  <div class="phone" id="phone">
+    <div class="aurora"></div>
+    <div class="island"></div>
+    <div class="ui">
+      <div class="head">
+        <div>
+          <div class="greeting">Good evening.</div>
+          <div class="sub" id="sub">2 pathways · 1 practiced today</div>
+        </div>
+        <button class="moon-btn" id="header-moon" title="Resting pathways" type="button">
+          ☾<span class="badge"></span>
+        </button>
+      </div>
+
+      <div class="stats">
+        <div class="c"><div class="v">12</div><div class="l">Today</div></div>
+        <div class="c"><div class="v">148</div><div class="l">Lifetime</div></div>
+        <div class="c"><div class="v" id="stat-active">2</div><div class="l">Active</div></div>
+      </div>
+
+      <div class="cards" id="cards"></div>
+    </div>
+
+    <button class="fab" type="button">＋&ensp;New pathway</button>
+
+    <div class="scrim" id="scrim"></div>
+    <div class="sheet" id="sheet" role="dialog" aria-modal="true">
+      <div class="glyph">☾</div>
+      <h3 id="sheet-title">Rest this pathway?</h3>
+      <p id="sheet-body">It’ll wait quietly with the others. You can wake it anytime — nothing is lost.</p>
+      <div class="actions">
+        <button class="keep" type="button" id="btn-keep">Keep</button>
+        <button class="rest" type="button" id="btn-rest">Rest</button>
+      </div>
+    </div>
+    <div class="toast" id="toast"></div>
+  </div>
+
+  <button class="reset" type="button" id="btn-reset">Reset demo</button>
+</div>
+
+<script>
+const PATHWAYS = [
+  { id: "rage", name: "Road rage", hue: "var(--ember)", stage: "Thread", togo: "7 to go", p: "62%", spark: true, hint: true },
+  { id: "scroll", name: "Doomscrolling", hue: "var(--orchid)", stage: "Spark", togo: "18 to go", p: "28%", spark: false, hint: false },
+];
+
+let resting = 0;
+let pending = null;
+let coachSeen = false;
+
+function render() {
+  const host = document.getElementById("cards");
+  host.innerHTML = PATHWAYS.map(p => `
+    <article class="pcard" data-id="${p.id}" style="--hue:${p.hue}">
+      <div class="pcard-top">
+        <div class="pname">${p.name}</div>
+        <div class="pcard-tools">
+          <span class="spark ${p.spark ? "" : "dim"}">${p.spark ? "✦" : "◌"}</span>
+          <button class="card-moon ${p.hint && !coachSeen ? "hint" : ""}"
+                  type="button" data-rest="${p.id}"
+                  aria-label="Rest ${p.name}" title="Rest pathway">☾</button>
+        </div>
+      </div>
+      <div class="pcard-meta">
+        <span class="stage-l">${p.stage}</span>
+        <span class="togo">${p.togo}</span>
+      </div>
+      <div class="thread"><i style="--p:${p.p}"></i></div>
+      ${p.hint ? `<div class="coach ${coachSeen ? "off" : "on"}" id="coach">Tap the moon to set it down.</div>` : ""}
+    </article>
+  `).join("");
+
+  host.querySelectorAll("[data-rest]").forEach(btn => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      openSheet(btn.dataset.rest);
+    });
+  });
+
+  updateChrome();
+}
+
+function updateChrome() {
+  const active = PATHWAYS.length;
+  document.getElementById("stat-active").textContent = String(active);
+  document.getElementById("sub").textContent =
+    active === 0 ? "All pathways are resting"
+    : `${active} pathway${active === 1 ? "" : "s"} · ${PATHWAYS.filter(p => p.spark).length} practiced today`;
+  const moon = document.getElementById("header-moon");
+  moon.classList.toggle("has-rest", resting > 0);
+}
+
+function openSheet(id) {
+  pending = PATHWAYS.find(p => p.id === id);
+  if (!pending) return;
+  coachSeen = true;
+  document.getElementById("coach")?.classList.remove("on");
+  document.getElementById("coach")?.classList.add("off");
+  document.querySelector(".card-moon.hint")?.classList.remove("hint");
+
+  document.getElementById("sheet-title").textContent = `Rest “${pending.name}”?`;
+  document.getElementById("sheet-body").textContent =
+    "It’ll wait quietly with the others. You can wake it anytime — nothing is lost.";
+  document.getElementById("scrim").classList.add("on");
+  document.getElementById("sheet").classList.add("on");
+}
+
+function closeSheet() {
+  pending = null;
+  document.getElementById("scrim").classList.remove("on");
+  document.getElementById("sheet").classList.remove("on");
+}
+
+function commitRest() {
+  if (!pending) return;
+  const id = pending.id;
+  const name = pending.name;
+  closeSheet();
+
+  const card = document.querySelector(`.pcard[data-id="${id}"]`);
+  if (!card) return;
+
+  // Align transform origin toward the header moon
+  card.classList.add("leaving");
+  const moon = document.getElementById("header-moon");
+  setTimeout(() => moon.classList.add("receive"), 180);
+  setTimeout(() => {
+    moon.classList.remove("receive");
+    moon.classList.add("has-rest");
+  }, 900);
+
+  setTimeout(() => {
+    const idx = PATHWAYS.findIndex(p => p.id === id);
+    if (idx >= 0) PATHWAYS.splice(idx, 1);
+    resting += 1;
+    card.classList.add("gone");
+    render();
+    showToast(`“${name}” is resting.`);
+  }, 520);
+}
+
+function showToast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.classList.add("on");
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(() => t.classList.remove("on"), 2400);
+}
+
+document.getElementById("scrim").onclick = closeSheet;
+document.getElementById("btn-keep").onclick = closeSheet;
+document.getElementById("btn-rest").onclick = commitRest;
+document.getElementById("header-moon").onclick = () => {
+  if (resting > 0) showToast(resting === 1 ? "1 pathway resting." : `${resting} pathways resting.`);
+  else showToast("Nothing is resting yet.");
+};
+document.getElementById("btn-reset").onclick = () => {
+  PATHWAYS.length = 0;
+  PATHWAYS.push(
+    { id: "rage", name: "Road rage", hue: "var(--ember)", stage: "Thread", togo: "7 to go", p: "62%", spark: true, hint: true },
+    { id: "scroll", name: "Doomscrolling", hue: "var(--orchid)", stage: "Spark", togo: "18 to go", p: "28%", spark: false, hint: false },
+  );
+  resting = 0;
+  coachSeen = false;
+  document.getElementById("header-moon").classList.remove("has-rest");
+  render();
+};
+
+render();
+</script>
+</body>
+</html>

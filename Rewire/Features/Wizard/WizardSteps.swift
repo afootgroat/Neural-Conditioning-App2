@@ -339,7 +339,7 @@ struct NewResponseStep: View {
         .scrollDismissesKeyboard(.interactively)
         .onAppear {
             if !EmotionPreset.all.contains(where: { $0.mantras.contains(draft.mantra) }) {
-                customMantra = draft.mantra
+                customMantra = String(draft.mantra.prefix(Metrics.mantraMaxLength))
             }
         }
     }
@@ -423,17 +423,23 @@ struct NewResponseStep: View {
                 .animation(Springs.snappy, value: selected)
             }
 
-            // Or write your own.
-            InkField(placeholder: "Or write your own…",
-                     text: $customMantra, hue: preset.hue.color)
-                .onChange(of: customMantra) { _, newValue in
-                    if !newValue.trimmed.isEmpty {
-                        draft.mantra = newValue.trimmed
-                    } else if !preset.mantras.contains(draft.mantra) {
-                        draft.mantra = ""
-                    }
+            // Or write your own — same quiet limit as the other ink fields.
+            LimitedInkField(
+                placeholder: "Or write your own…",
+                text: $customMantra,
+                hue: preset.hue.color,
+                maxCharacters: Metrics.mantraMaxLength,
+                whisper: "Short enough to say under pressure.",
+                singleLine: true
+            )
+            .onChange(of: customMantra) { _, newValue in
+                if !newValue.trimmed.isEmpty {
+                    draft.mantra = newValue.trimmed
+                } else if !preset.mantras.contains(draft.mantra) {
+                    draft.mantra = ""
                 }
-                .padding(.top, 4)
+            }
+            .padding(.top, 4)
         }
     }
 }

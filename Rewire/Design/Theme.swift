@@ -79,4 +79,6 @@ enum Metrics {
     static let stimulusMaxLength: Int = 35
     /// Feel / think / do lines on the old-reaction step — a sketch, not a story.
     static let reactionMaxLength: Int = 35
+    /// Custom mantra — brief enough to summon under pressure.
+    static let mantraMaxLength: Int = 40
 }

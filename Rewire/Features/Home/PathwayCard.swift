@@ -1,20 +1,28 @@
 import SwiftUI
 
 /// One pathway on the home screen: name, maturity, a thread of progress,
-/// and a spark that lights up once it has been practiced today.
+/// a spark for practice-today, and an optional quiet moon to set it down.
 struct PathwayCard: View {
     var pathway: Pathway
+    /// Reserves trailing space for `PathwayRestButton` overlaid by Home.
+    var reservesRestSlot: Bool = true
 
     var body: some View {
         GlassCard(tint: pathway.hue.color) {
             VStack(alignment: .leading, spacing: 16) {
-                HStack(alignment: .firstTextBaseline) {
+                HStack(alignment: .center, spacing: 8) {
                     Text(pathway.name)
                         .font(.system(size: 19, weight: .semibold, design: .rounded))
                         .foregroundStyle(Ink.textPrimary)
                         .lineLimit(1)
-                    Spacer()
+                        .frame(maxWidth: .infinity, alignment: .leading)
+
                     spark
+
+                    if reservesRestSlot {
+                        // Matches PathwayRestButton so the overlaid moon aligns.
+                        Color.clear.frame(width: 32, height: 32)
+                    }
                 }
 
                 HStack(alignment: .center, spacing: 10) {
@@ -38,7 +46,7 @@ struct PathwayCard: View {
             }
             .padding(20)
         }
-        .accessibilityElement(children: .combine)
+        .accessibilityElement(children: .contain)
         .accessibilityLabel(accessibilitySummary)
     }
 
@@ -61,6 +69,7 @@ struct PathwayCard: View {
                 )
         }
         .animation(Springs.bouncy, value: pathway.practicedToday)
+        .accessibilityHidden(true)
     }
 
     private var accessibilitySummary: String {
@@ -73,5 +82,29 @@ struct PathwayCard: View {
             ? "practiced today, \(pathway.todayReps) reps"
             : "not practiced today")
         return parts.joined(separator: ", ")
+    }
+}
+
+/// Quiet moon control — composed above the NavigationLink so it never
+/// steals the zoom transition or opens training by accident.
+struct PathwayRestButton: View {
+    var pathwayName: String
+    var action: () -> Void
+
+    var body: some View {
+        Button {
+            Haptics.shared.tick()
+            action()
+        } label: {
+            Image(systemName: "moon.zzz")
+                .font(.system(size: 13, weight: .medium))
+                .foregroundStyle(Ink.textTertiary)
+                .frame(width: 32, height: 32)
+                .background(Circle().fill(Color.white.opacity(0.04)))
+                .contentShape(Circle())
+        }
+        .buttonStyle(PressableStyle(scale: 0.88))
+        .accessibilityLabel("Rest \(pathwayName)")
+        .accessibilityHint("Moves this pathway to Resting. You can wake it later.")
     }
 }

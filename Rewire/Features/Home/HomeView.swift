@@ -9,6 +9,9 @@ struct HomeView: View {
     @Namespace private var zoom
     @State private var wizard: WizardMode? = nil
     @State private var showArchive = false
+    @State private var pendingRest: Pathway? = nil
+    @State private var restToast: String? = nil
+    @State private var moonReceiving = false
 
     var body: some View {
         NavigationStack {
@@ -31,18 +34,44 @@ struct HomeView: View {
                     .padding(.bottom, 120)
                 }
                 .scrollIndicators(.hidden)
-                .allowsHitTesting(!showArchive)
+                .allowsHitTesting(!showArchive && pendingRest == nil)
 
                 if !store.active.isEmpty {
                     newPathwayButton
-                        .opacity(showArchive ? 0 : 1)
-                        .allowsHitTesting(!showArchive)
+                        .opacity(showArchive || pendingRest != nil ? 0 : 1)
+                        .allowsHitTesting(!showArchive && pendingRest == nil)
                 }
 
                 if showArchive {
                     archiveOverlay
                         .transition(.opacity)
                         .zIndex(1)
+                }
+
+                if let pathway = pendingRest {
+                    restConfirmOverlay(pathway)
+                        .transition(.opacity)
+                        .zIndex(3)
+                }
+
+                if let restToast {
+                    Text(restToast)
+                        .font(.voice(14))
+                        .italic()
+                        .foregroundStyle(Ink.textSecondary)
+                        .padding(.horizontal, 18)
+                        .padding(.vertical, 12)
+                        .background {
+                            Capsule()
+                                .fill(.ultraThinMaterial)
+                                .overlay(Capsule().fill(Ink.raised.opacity(0.85)))
+                                .overlay(Capsule().stroke(Ink.hairline, lineWidth: 1))
+                        }
+                        .padding(.bottom, 100)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+                        .transition(.opacity.combined(with: .offset(y: 10)))
+                        .zIndex(4)
+                        .allowsHitTesting(false)
                 }
 
                 // Moon stays above the scrim so it can toggle the sheet closed.
@@ -56,11 +85,13 @@ struct HomeView: View {
                         .padding(.top, 24)
                         Spacer()
                     }
-                    .zIndex(2)
+                    .zIndex(5)
                 }
             }
             .background(Ink.base)
             .animation(Springs.standard, value: showArchive)
+            .animation(Springs.standard, value: pendingRest?.id)
+            .animation(Springs.standard, value: restToast)
             .navigationDestination(for: Pathway.ID.self) { id in
                 TrainingView(pathwayID: id)
                     .navigationTransition(.zoom(sourceID: id, in: zoom))
@@ -84,10 +115,30 @@ struct HomeView: View {
                 .font(.system(size: 15, weight: .medium))
                 .foregroundStyle(store.archived.isEmpty ? Ink.textTertiary : Ink.textSecondary)
                 .frame(width: 44, height: 44)
-                .background(Circle().fill(.white.opacity(0.05)))
+                .background {
+                    Circle()
+                        .fill(.white.opacity(0.05))
+                        .overlay {
+                            Circle().stroke(
+                                store.archived.isEmpty
+                                    ? Color.clear
+                                    : Color(hex: 0x8B7BFF).opacity(0.4),
+                                lineWidth: 1
+                            )
+                        }
+                        .shadow(
+                            color: store.archived.isEmpty
+                                ? .clear
+                                : Color(hex: 0x8B7BFF).opacity(0.25),
+                            radius: 10
+                        )
+                }
+                .scaleEffect(moonReceiving ? 1.12 : 1)
         }
         .buttonStyle(PressableStyle(scale: 0.92))
         .accessibilityLabel("Resting pathways")
+        .animation(Springs.bouncy, value: moonReceiving)
+        .animation(Springs.standard, value: store.archived.isEmpty)
     }
 
     /// Custom resting sheet so the moon can toggle it closed and the
@@ -125,6 +176,54 @@ struct HomeView: View {
             }
         }
         .ignoresSafeArea(edges: .bottom)
+    }
+
+    private func restConfirmOverlay(_ pathway: Pathway) -> some View {
+        ZStack(alignment: .bottom) {
+            Color.black.opacity(0.45)
+                .ignoresSafeArea()
+                .onTapGesture {
+                    withAnimation(Springs.standard) { pendingRest = nil }
+                }
+
+            RestConfirmSheet(
+                pathwayName: pathway.name,
+                onKeep: {
+                    withAnimation(Springs.standard) { pendingRest = nil }
+                },
+                onRest: {
+                    commitRest(pathway)
+                }
+            )
+            .padding(.horizontal, 16)
+            .padding(.bottom, 28)
+            .transition(.move(edge: .bottom).combined(with: .opacity))
+        }
+    }
+
+    private func commitRest(_ pathway: Pathway) {
+        withAnimation(Springs.standard) { pendingRest = nil }
+
+        moonReceiving = true
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.55) {
+            moonReceiving = false
+        }
+
+        withAnimation(Springs.standard) {
+            store.archive(pathway.id)
+        }
+        Haptics.shared.tick()
+
+        withAnimation(Springs.standard) {
+            restToast = "“\(pathway.name)” is resting."
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.4) {
+            withAnimation(Springs.standard) {
+                if restToast == "“\(pathway.name)” is resting." {
+                    restToast = nil
+                }
+            }
+        }
     }
 
     // MARK: Header
@@ -188,21 +287,25 @@ struct HomeView: View {
     private var pathwayList: some View {
         LazyVStack(spacing: 14) {
             ForEach(store.active) { pathway in
-                NavigationLink(value: pathway.id) {
-                    PathwayCard(pathway: pathway)
+                ZStack(alignment: .topTrailing) {
+                    NavigationLink(value: pathway.id) {
+                        PathwayCard(pathway: pathway)
+                    }
+                    .buttonStyle(PressableStyle(scale: 0.98))
+                    .matchedTransitionSource(id: pathway.id, in: zoom)
+
+                    // Moon sits above the link so taps never open training.
+                    PathwayRestButton(pathwayName: pathway.name) {
+                        withAnimation(Springs.standard) { pendingRest = pathway }
+                    }
+                    .padding(.top, 20)
+                    .padding(.trailing, 20)
                 }
-                .buttonStyle(PressableStyle(scale: 0.98))
-                .matchedTransitionSource(id: pathway.id, in: zoom)
                 .contextMenu {
                     Button {
                         wizard = .edit(pathway)
                     } label: {
                         Label("Edit blueprint", systemImage: "pencil.line")
-                    }
-                    Button {
-                        withAnimation(Springs.standard) { store.archive(pathway.id) }
-                    } label: {
-                        Label("Rest pathway", systemImage: "moon.zzz")
                     }
                 }
             }

@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rewire — Rest C · Tend the garden</title>
+<style>
+  :root {
+    --ink: #07070C;
+    --raised: rgba(16,16,24,0.78);
+    --text-1: #F4F2EC; --text-2: #8E8E9E; --text-3: #55555F;
+    --hairline: rgba(255,255,255,0.08);
+    --tide: #4DB6C8; --ember: #E07A4F; --orchid: #B07BC8; --honey: #D4A84B;
+    --choose: #8B7BFF; --notice: #FFC24B;
+    --ui: "SF Pro Text", -apple-system, "Segoe UI", system-ui, sans-serif;
+    --voice: "New York", "Iowan Old Style", Georgia, serif;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-font-smoothing: antialiased; }
+  html, body { min-height: 100%; background: #101016; font-family: var(--ui); color: var(--text-1); }
+  .stage {
+    min-height: 100vh; display: flex; flex-direction: column; align-items: center;
+    justify-content: center; gap: 28px; padding: 36px 20px 48px;
+  }
+  .meta { text-align: center; max-width: 400px; }
+  .meta .tag {
+    font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--notice); font-weight: 600; margin-bottom: 8px;
+  }
+  .meta h1 { font-family: var(--voice); font-size: 22px; font-weight: 500; margin-bottom: 6px; }
+  .meta p { font-size: 13px; color: var(--text-2); line-height: 1.5; }
+  .meta a {
+    display: inline-block; margin-top: 12px; font-size: 12px; color: var(--text-3);
+    text-decoration: none;
+  }
+
+  .phone {
+    position: relative; width: 390px; height: 844px; background: var(--ink);
+    border-radius: 54px; overflow: hidden; flex: none;
+    box-shadow: 0 0 0 10px #000, 0 0 0 12px #2a2a30, 0 40px 100px rgba(0,0,0,0.55);
+  }
+  .island {
+    position: absolute; top: 12px; left: 50%; transform: translateX(-50%);
+    width: 118px; height: 34px; background: #000; border-radius: 20px; z-index: 80;
+  }
+  .aurora {
+    position: absolute; inset: 0; z-index: 0; pointer-events: none;
+    background:
+      radial-gradient(ellipse 90% 55% at 18% 8%, rgba(255,194,75,0.10), transparent 55%),
+      radial-gradient(ellipse 70% 45% at 88% 28%, rgba(139,123,255,0.12), transparent 50%),
+      var(--ink);
+    transition: filter 0.6s ease;
+  }
+  .phone.tending .aurora {
+    filter: saturate(0.85) brightness(0.92);
+  }
+
+  .ui {
+    position: absolute; inset: 0; z-index: 10;
+    padding: 62px 24px 0; display: flex; flex-direction: column;
+  }
+
+  .head {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    gap: 12px; margin-bottom: 18px; min-height: 72px;
+  }
+  .greeting {
+    font-family: var(--voice); font-size: 30px; font-weight: 500;
+    transition: opacity 0.35s, transform 0.45s cubic-bezier(0.22,1,0.36,1);
+  }
+  .sub {
+    font-size: 13px; color: var(--text-2); margin-top: 6px;
+    transition: opacity 0.35s;
+  }
+  .phone.tending .greeting {
+    opacity: 0; transform: translateY(-6px); height: 0; margin: 0; overflow: hidden;
+  }
+  .phone.tending .sub { opacity: 0; height: 0; margin: 0; overflow: hidden; }
+
+  .tend-title {
+    font-family: var(--voice); font-size: 28px; font-weight: 500;
+    opacity: 0; transform: translateY(8px); height: 0; overflow: hidden;
+    transition: opacity 0.4s, transform 0.45s cubic-bezier(0.22,1,0.36,1);
+  }
+  .tend-sub {
+    font-size: 13px; color: var(--text-2); margin-top: 6px;
+    opacity: 0; height: 0; overflow: hidden;
+    transition: opacity 0.4s 0.05s;
+  }
+  .phone.tending .tend-title {
+    opacity: 1; transform: none; height: auto;
+  }
+  .phone.tending .tend-sub {
+    opacity: 1; height: auto;
+  }
+
+  .head-actions {
+    display: flex; align-items: center; gap: 8px; flex: none;
+  }
+
+  /* Tend — quiet text control, not a second moon competing */
+  .tend-btn {
+    appearance: none; border: none; background: none;
+    font-size: 14px; font-weight: 600; color: var(--text-3);
+    letter-spacing: 0.02em; cursor: pointer; padding: 10px 4px;
+    transition: color 0.25s;
+  }
+  .tend-btn:hover { color: var(--text-2); }
+  .phone.tending .tend-btn { display: none; }
+
+  .done-btn {
+    appearance: none; border: none;
+    height: 36px; padding: 0 16px; border-radius: 18px;
+    background: color-mix(in srgb, var(--notice) 18%, transparent);
+    border: 1px solid color-mix(in srgb, var(--notice) 45%, transparent);
+    color: var(--notice); font-size: 14px; font-weight: 600;
+    cursor: pointer;
+    opacity: 0; pointer-events: none; transform: scale(0.92);
+    transition: opacity 0.3s, transform 0.35s cubic-bezier(0.22,1,0.36,1);
+  }
+  .phone.tending .done-btn {
+    opacity: 1; pointer-events: auto; transform: scale(1);
+  }
+
+  .moon-btn {
+    width: 44px; height: 44px; border-radius: 50%;
+    background: rgba(255,255,255,0.05); border: 1px solid var(--hairline);
+    color: var(--text-3); font-size: 18px; cursor: pointer;
+    display: grid; place-items: center; position: relative;
+    transition: color 0.35s, box-shadow 0.45s, border-color 0.35s, opacity 0.3s;
+  }
+  .moon-btn.has-rest {
+    color: var(--text-2);
+    border-color: color-mix(in srgb, var(--choose) 40%, transparent);
+    box-shadow: 0 0 18px color-mix(in srgb, var(--choose) 25%, transparent);
+  }
+  .moon-btn.receive { animation: catch 0.65s cubic-bezier(0.22,1,0.36,1); }
+  @keyframes catch {
+    0% { transform: scale(1); }
+    40% { transform: scale(1.14); color: var(--choose); }
+    100% { transform: scale(1); }
+  }
+  .phone.tending .moon-btn {
+    /* Moon becomes the destination — slightly brighter while tending */
+    color: var(--text-2);
+    border-color: color-mix(in srgb, var(--choose) 30%, transparent);
+  }
+
+  .stats {
+    display: grid; grid-template-columns: 1fr 1fr 1fr;
+    padding: 16px 14px; border-radius: 22px; margin-bottom: 18px;
+    background: linear-gradient(rgba(255,255,255,0.04), transparent), var(--raised);
+    border: 1px solid var(--hairline);
+    transition: opacity 0.35s, transform 0.4s, max-height 0.4s, margin 0.4s, padding 0.4s;
+  }
+  .phone.tending .stats {
+    opacity: 0; transform: translateY(-8px); max-height: 0; margin: 0; padding: 0;
+    overflow: hidden; border: none;
+  }
+  .stats .c { text-align: center; }
+  .stats .v { font-size: 20px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .stats .l {
+    font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--text-3); font-weight: 600; margin-top: 4px;
+  }
+
+  .cards { display: flex; flex-direction: column; gap: 12px; flex: 1; overflow: hidden; }
+
+  .pcard {
+    --hue: var(--tide);
+    position: relative;
+    border-radius: 26px;
+    background: linear-gradient(180deg, color-mix(in srgb, var(--hue) 8%, transparent), transparent 55%),
+                linear-gradient(rgba(255,255,255,0.035), transparent), var(--raised);
+    border: 1px solid color-mix(in srgb, var(--hue) 22%, var(--hairline));
+    padding: 18px 18px 16px;
+    transition: transform 0.45s cubic-bezier(0.22,1,0.36,1), opacity 0.4s, border-color 0.35s;
+    transform-origin: 92% 10%;
+  }
+  .phone.tending .pcard {
+    border-color: color-mix(in srgb, var(--hue) 35%, var(--hairline));
+    animation: floatCard 3.6s ease-in-out infinite;
+  }
+  .phone.tending .pcard:nth-child(2) { animation-delay: 0.35s; }
+  .phone.tending .pcard:nth-child(3) { animation-delay: 0.7s; }
+  @keyframes floatCard {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-3px); }
+  }
+  .pcard.leaving {
+    animation: none !important;
+    opacity: 0;
+    transform: translate(52px, -240px) scale(0.16);
+    pointer-events: none;
+    transition: opacity 0.45s, transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .pcard-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+  .pname { font-size: 18px; font-weight: 600; padding-top: 2px; flex: 1; }
+  .pcard-tools { display: flex; align-items: center; gap: 2px; }
+
+  .spark {
+    font-size: 12px; color: var(--hue); width: 28px; height: 28px;
+    display: grid; place-items: center;
+    filter: drop-shadow(0 0 5px color-mix(in srgb, var(--hue) 70%, transparent));
+    transition: opacity 0.3s, transform 0.35s;
+  }
+  .spark.dim { color: var(--text-3); filter: none; }
+  .phone.tending .spark {
+    opacity: 0; transform: scale(0.6); width: 0; overflow: hidden;
+  }
+
+  /* Moon blooms only in tend mode */
+  .rest-orb {
+    width: 0; height: 36px; border-radius: 18px; border: none; cursor: pointer;
+    background: color-mix(in srgb, var(--choose) 14%, transparent);
+    color: var(--choose); font-size: 16px;
+    display: flex; align-items: center; justify-content: center; gap: 0;
+    overflow: hidden; opacity: 0; padding: 0;
+    transition: width 0.4s cubic-bezier(0.22,1,0.36,1), opacity 0.3s, background 0.2s, transform 0.2s;
+  }
+  .phone.tending .rest-orb {
+    width: 36px; opacity: 1;
+    box-shadow: 0 0 16px color-mix(in srgb, var(--choose) 22%, transparent);
+  }
+  .phone.tending .rest-orb:hover {
+    background: color-mix(in srgb, var(--choose) 28%, transparent);
+    transform: scale(1.06);
+  }
+  .phone.tending .rest-orb:active { transform: scale(0.94); }
+  .phone.tending .rest-orb.wide {
+    width: 96px; gap: 6px; padding: 0 12px;
+    font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase;
+  }
+  .rest-orb .word {
+    font-family: var(--ui); max-width: 0; opacity: 0; overflow: hidden;
+    transition: max-width 0.35s, opacity 0.25s;
+  }
+  .phone.tending .rest-orb.wide .word {
+    max-width: 48px; opacity: 1;
+  }
+
+  .pcard-meta {
+    display: flex; justify-content: space-between; align-items: center; margin-top: 14px;
+  }
+  .stage-l {
+    font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
+    font-weight: 600; color: var(--hue);
+  }
+  .togo { font-size: 11px; color: var(--text-3); font-variant-numeric: tabular-nums; }
+  .thread {
+    margin-top: 12px; height: 3px; border-radius: 2px; background: rgba(255,255,255,0.06);
+  }
+  .thread > i {
+    display: block; height: 100%; width: var(--p);
+    background: linear-gradient(90deg, color-mix(in srgb, var(--hue) 40%, transparent), var(--hue));
+    border-radius: 2px;
+  }
+
+  .whisper {
+    margin-top: 16px; text-align: center;
+    font-family: var(--voice); font-style: italic; font-size: 13px; color: var(--text-3);
+    opacity: 0; transform: translateY(6px);
+    transition: opacity 0.45s 0.1s, transform 0.45s 0.1s;
+    pointer-events: none;
+  }
+  .phone.tending .whisper { opacity: 1; transform: none; }
+
+  .fab {
+    position: absolute; left: 50%; bottom: 36px; transform: translateX(-50%);
+    z-index: 20; height: 50px; padding: 0 22px; border: none; border-radius: 25px;
+    background: var(--text-1); color: var(--ink);
+    font-size: 15px; font-weight: 600;
+    transition: opacity 0.3s, transform 0.35s;
+  }
+  .phone.tending .fab {
+    opacity: 0; pointer-events: none; transform: translateX(-50%) translateY(12px);
+  }
+
+  .toast {
+    position: absolute; left: 50%; bottom: 100px; z-index: 50;
+    transform: translate(-50%, 16px);
+    padding: 12px 18px; border-radius: 20px;
+    background: rgba(20,20,28,0.92); border: 1px solid var(--hairline);
+    font-family: var(--voice); font-style: italic; font-size: 14px; color: var(--text-2);
+    opacity: 0; pointer-events: none; white-space: nowrap;
+    transition: opacity 0.35s, transform 0.45s cubic-bezier(0.22,1,0.36,1);
+  }
+  .toast.on { opacity: 1; transform: translate(-50%, 0); }
+
+  .reset {
+    appearance: none; border: 1px solid var(--hairline); background: rgba(255,255,255,0.04);
+    color: var(--text-2); font-size: 12px; font-weight: 600; padding: 8px 14px;
+    border-radius: 999px; cursor: pointer;
+  }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="meta">
+    <div class="tag">Mockup C</div>
+    <h1>Tend the garden</h1>
+    <p>Tap <em>Tend</em>. The garden softens. A moon blooms on each card — tap to rest. <em>Done</em> returns you to practice.</p>
+    <a href="rest-pathway.html">← All rest mockups</a>
+  </div>
+
+  <div class="phone" id="phone">
+    <div class="aurora"></div>
+    <div class="island"></div>
+    <div class="ui">
+      <div class="head">
+        <div>
+          <div class="greeting">Good evening.</div>
+          <div class="sub" id="sub">3 pathways · 1 practiced today</div>
+          <div class="tend-title">Tend</div>
+          <div class="tend-sub">Tap a moon to set a pathway down.</div>
+        </div>
+        <div class="head-actions">
+          <button class="tend-btn" type="button" id="btn-tend">Tend</button>
+          <button class="done-btn" type="button" id="btn-done">Done</button>
+          <button class="moon-btn" type="button" id="header-moon">☾</button>
+        </div>
+      </div>
+
+      <div class="stats">
+        <div class="c"><div class="v">12</div><div class="l">Today</div></div>
+        <div class="c"><div class="v">148</div><div class="l">Lifetime</div></div>
+        <div class="c"><div class="v" id="stat-active">3</div><div class="l">Active</div></div>
+      </div>
+
+      <div class="cards" id="cards"></div>
+      <div class="whisper">Resting pathways wait behind the moon.</div>
+    </div>
+    <button class="fab" type="button">＋&ensp;New pathway</button>
+    <div class="toast" id="toast"></div>
+  </div>
+  <button class="reset" type="button" id="btn-reset">Reset demo</button>
+</div>
+
+<script>
+let pathways = [
+  { id: "rage", name: "Road rage", hue: "var(--ember)", stage: "Thread", togo: "7 to go", p: "62%", spark: true },
+  { id: "scroll", name: "Doomscrolling", hue: "var(--orchid)", stage: "Spark", togo: "18 to go", p: "28%", spark: false },
+  { id: "kids", name: "Snapping at the kids", hue: "var(--honey)", stage: "Ember", togo: "3 to go", p: "84%", spark: false },
+];
+let resting = 0;
+let tending = false;
+let labelTimer = null;
+
+function render() {
+  const host = document.getElementById("cards");
+  host.innerHTML = pathways.map((p, i) => `
+    <article class="pcard" data-id="${p.id}" style="--hue:${p.hue}">
+      <div class="pcard-top">
+        <div class="pname">${p.name}</div>
+        <div class="pcard-tools">
+          <span class="spark ${p.spark ? "" : "dim"}">${p.spark ? "✦" : "◌"}</span>
+          <button class="rest-orb ${tending && i === 0 ? "wide" : ""}" type="button"
+                  data-rest="${p.id}" aria-label="Rest ${p.name}">
+            <span>☾</span><span class="word">Rest</span>
+          </button>
+        </div>
+      </div>
+      <div class="pcard-meta">
+        <span class="stage-l">${p.stage}</span>
+        <span class="togo">${p.togo}</span>
+      </div>
+      <div class="thread"><i style="--p:${p.p}"></i></div>
+    </article>
+  `).join("");
+
+  host.querySelectorAll("[data-rest]").forEach(btn => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      if (!tending) return;
+      restPathway(btn.dataset.rest);
+    });
+  });
+
+  // First rest orb briefly shows the word "Rest" then collapses to moon-only
+  if (tending) {
+    clearTimeout(labelTimer);
+    labelTimer = setTimeout(() => {
+      document.querySelectorAll(".rest-orb.wide").forEach(el => el.classList.remove("wide"));
+    }, 2200);
+  }
+
+  updateChrome();
+}
+
+function updateChrome() {
+  document.getElementById("stat-active").textContent = String(pathways.length);
+  document.getElementById("sub").textContent =
+    pathways.length === 0 ? "Garden is clear"
+    : `${pathways.length} pathway${pathways.length === 1 ? "" : "s"} · ${pathways.filter(p => p.spark).length} practiced today`;
+  document.getElementById("header-moon").classList.toggle("has-rest", resting > 0);
+  document.getElementById("phone").classList.toggle("tending", tending);
+}
+
+function setTending(on) {
+  tending = on;
+  render();
+}
+
+function restPathway(id) {
+  const p = pathways.find(x => x.id === id);
+  const card = document.querySelector(`.pcard[data-id="${id}"]`);
+  if (!p || !card) return;
+
+  card.classList.add("leaving");
+  const moon = document.getElementById("header-moon");
+  setTimeout(() => moon.classList.add("receive"), 160);
+  setTimeout(() => moon.classList.remove("receive"), 800);
+
+  setTimeout(() => {
+    pathways = pathways.filter(x => x.id !== id);
+    resting += 1;
+    render();
+    showToast(`“${p.name}” is resting.`);
+    if (pathways.length === 0) {
+      setTimeout(() => setTending(false), 900);
+    }
+  }, 480);
+}
+
+function showToast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.classList.add("on");
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(() => t.classList.remove("on"), 2400);
+}
+
+document.getElementById("btn-tend").onclick = () => setTending(true);
+document.getElementById("btn-done").onclick = () => setTending(false);
+document.getElementById("btn-reset").onclick = () => {
+  pathways = [
+    { id: "rage", name: "Road rage", hue: "var(--ember)", stage: "Thread", togo: "7 to go", p: "62%", spark: true },
+    { id: "scroll", name: "Doomscrolling", hue: "var(--orchid)", stage: "Spark", togo: "18 to go", p: "28%", spark: false },
+    { id: "kids", name: "Snapping at the kids", hue: "var(--honey)", stage: "Ember", togo: "3 to go", p: "84%", spark: false },
+  ];
+  resting = 0;
+  tending = false;
+  document.getElementById("header-moon").classList.remove("has-rest");
+  render();
+};
+
+render();
+</script>
+</body>
+</html>
