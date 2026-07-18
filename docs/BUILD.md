@@ -39,7 +39,29 @@ zero project edits.
 - The rep ripple (`layerEffect`) renders in the simulator but its cost is
   only meaningful on device — it's mounted for 1.1s per rep.
 
-## Design source of truth
+## PWA (iPhone / installable web)
+
+The interactive prototype in `prototype/` can run as a Progressive Web App.
+
+### Local dev
+```bash
+cd prototype
+python -m http.server 8080
+```
+Open http://localhost:8080/ on your phone (same Wi‑Fi) or use a tunnel for HTTPS testing.
+
+### GitHub Pages (HTTPS)
+1. Push to `master` — the workflow `.github/workflows/deploy-prototype-pages.yml` publishes `prototype/` to GitHub Pages.
+2. In the repo on GitHub: **Settings → Pages → Build and deployment → Source: GitHub Actions**.
+3. After the workflow succeeds, open the Pages URL (typically `https://<user>.github.io/Neural-Conditioning-App2/`).
+
+### Install on iPhone
+1. Open the HTTPS URL in **Safari**.
+2. Share → **Add to Home Screen**.
+3. Launch from the icon — standalone, full screen, data saved on device via `localStorage`.
+
+Debug panel on phone: append `?debug=1` to the URL.
+
 The shaders and screens were audited frame-by-frame in `prototype/index.html`
 (open in any browser; use the debug panel to scrub fire/charge/celebration).
 GLSL there and Metal here are kept 1:1 — if you tune one, tune both.

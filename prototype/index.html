@@ -2,7 +2,16 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Rewire — design audit prototype</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#07070C">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Rewire">
+<title>Rewire</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" href="icons/icon-192.png" type="image/png">
+<link rel="stylesheet" href="pwa.css">
 <style>
   :root {
     --ink: #07070C;
@@ -744,6 +753,7 @@
   </div>
 </div>
 
+<script src="pwa.js"></script>
 <script>
 "use strict";
 /* =========================================================================
@@ -777,7 +787,7 @@ const EMOTIONS = [
   { name: "Acceptance", hue: "iris", mantras: ["Letting it be frees my next move.", "I don't argue with what already is.", "Resistance is optional."] },
 ];
 
-const pathways = [
+const SEED_PATHWAYS = [
   { id: 1, name: "Road rage", stimulus: "Someone cuts me off in traffic",
     feelings: "A hot flash of anger", thoughts: "“They did that on purpose.”", doing: "Tailgate, mutter, grip the wheel",
     emotion: "Calm", hue: "tide", mantra: "This moment is not an emergency.",
@@ -791,9 +801,18 @@ const pathways = [
     emotion: "Compassion", hue: "dawn", mantra: "Soft heart, steady hands.",
     lifetime: 12, today: 3 },
 ];
-const archived = [
+const SEED_ARCHIVED = [
   { name: "Nail biting", lifetime: 214, maturity: "Strengthening", hue: "honey" },
 ];
+
+const stored = window.RewirePWA?.loadStore?.() ?? null;
+const useSeed = !stored && !window.RewirePWA?.isMobileShell;
+let pathways = stored ? stored.pathways : (useSeed ? SEED_PATHWAYS.slice() : []);
+let archived = stored ? stored.archived : (useSeed ? SEED_ARCHIVED.slice() : []);
+let hasCompletedOnboarding = stored?.hasCompletedOnboarding ?? false;
+
+window.__rewireGetStore = () => ({ pathways, archived, hasCompletedOnboarding });
+function persistStore() { window.RewirePWA?.scheduleSave?.(); }
 
 /* =========================================================================
    GLSL — 1:1 ports of Rewire.metal (aurora / orb / ripple / weave)
@@ -977,8 +996,30 @@ const U = {};
  "u_charge","u_crossfade","u_breathe","u_seed","u_fire","u_hueA","u_hueB",
  "u_rippleP","u_rippleAmp","u_weaveP","u_weaveTint"].forEach(n => U[n] = gl.getUniformLocation(prog, n));
 
-const W = 390, H = 844;
+let W = 390, H = 844;
+
+function layoutTrainingArc() {
+  const arc = document.getElementById("arc");
+  if (!arc) return;
+  arc.setAttribute("width", W);
+  arc.setAttribute("height", H);
+  const cx = W / 2;
+  const cy = H * 0.52;
+  const r = W * (166 / 390);
+  arc.querySelectorAll("circle").forEach((c) => {
+    c.setAttribute("cx", cx);
+    c.setAttribute("cy", cy);
+    c.setAttribute("r", r);
+  });
+  const fill = document.getElementById("arc-fill");
+  if (fill) fill.setAttribute("transform", `rotate(-90 ${cx} ${cy})`);
+}
+
 function resize() {
+  const phone = document.getElementById("phone");
+  W = phone?.clientWidth || 390;
+  H = phone?.clientHeight || 844;
+  layoutTrainingArc();
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
   canvas.width = W * dpr; canvas.height = H * dpr;
   gl.viewport(0, 0, canvas.width, canvas.height);
@@ -986,6 +1027,7 @@ function resize() {
   gl.uniform2f(U.u_res, W, H);
 }
 resize();
+window.addEventListener("resize", resize);
 
 function hexToRgb(hex) {
   const n = parseInt(hex.slice(1), 16);
@@ -1018,7 +1060,7 @@ PRACTICE.acceptCue =
 
 const state = {
   screen: "home",
-  current: pathways[0],
+  current: pathways[0] || { lifetime: 0, hue: "iris", today: 0, name: "" },
   stageIdx: 0, prevStageIdx: 0, stageChangedAt: -1e9,
   firedAt: null, weaveAt: null, surgeAt: null,
   holding: false, cueVisible: false,
@@ -1107,7 +1149,7 @@ function render(nowMs) {
   gl.uniform3f(U.u_hueB, hueB[0], hueB[1], hueB[2]);
   gl.uniform1f(U.u_breathe, 1);
   /* seed shifts only when a rep fires — continuous interior within a rep */
-  gl.uniform1f(U.u_seed, state.current.lifetime % 64);
+  gl.uniform1f(U.u_seed, (state.current?.lifetime || 0) % 64);
 
   let fire = 0;
   if (state.fireScrub > 0) fire = 1 - smooth(state.fireScrub);
@@ -1133,7 +1175,7 @@ function render(nowMs) {
     else if (x >= 1) hideWeave();
   }
   gl.uniform1f(U.u_weaveP, weaveP);
-  const wt = hexToRgb(HUES[state.current.hue]);
+  const wt = hexToRgb(HUES[state.current?.hue || "iris"]);
   gl.uniform3f(U.u_weaveTint, wt[0], wt[1], wt[2]);
 
   gl.drawArrays(gl.TRIANGLES, 0, 3);
@@ -1273,6 +1315,7 @@ function commitRest() {
     moon.classList.add("receive");
     setTimeout(() => moon.classList.remove("receive"), 700);
     renderHome();
+    persistStore();
     showRestToast(`“${p.name}” is resting.`);
   };
 
@@ -1320,7 +1363,8 @@ function renderTraining() {
   document.getElementById("c-today").textContent = p.today;
   document.getElementById("c-life").textContent = p.lifetime;
   const arc = document.getElementById("arc-fill");
-  const circumference = 2 * Math.PI * 166;
+  const arcR = W * (166 / 390);
+  const circumference = 2 * Math.PI * arcR;
   arc.setAttribute("stroke", hue + "d9");
   arc.style.color = hue;
   arc.setAttribute("stroke-dasharray",
@@ -1359,6 +1403,7 @@ function advanceStage() {
     const p = state.current;
     const before = maturityFor(p.lifetime);
     p.lifetime++; p.today++;
+    persistStore();
     const after = maturityFor(p.lifetime);
     if (after !== before) {
       state.surgeAt = clock.t + 0.45;
@@ -1706,6 +1751,7 @@ document.getElementById("btn-continue").onclick = () => {
         state.current = p;
       }
       state.editingId = null;
+      persistStore();
       showScreen(state.wizardReturn || "training");
       if (state.wizardReturn === "training") renderTraining();
       else renderHome();
@@ -1713,6 +1759,8 @@ document.getElementById("btn-continue").onclick = () => {
       pathways.push({ id: Date.now(), name: d.name.trim(), stimulus: d.stimulus.trim(),
         feelings: d.feelings.trim(), thoughts: d.thoughts.trim(), doing: d.doing.trim(),
         emotion: d.emotion, hue: d.hue, mantra: d.mantra, lifetime: 0, today: 0 });
+      hasCompletedOnboarding = true;
+      persistStore();
       renderHome(); showScreen("home");
     }
   }
@@ -1761,6 +1809,7 @@ function renderArchive() {
       });
       renderArchive();
       renderHome();
+      persistStore();
       if (archived.length === 0) closeArchive();
     };
   });
@@ -1770,6 +1819,7 @@ function renderArchive() {
       archived.splice(i, 1);
       renderArchive();
       renderHome();
+      persistStore();
       if (archived.length === 0) closeArchive();
     };
   });
@@ -1846,6 +1896,8 @@ document.getElementById("ob-cta").onclick = () => {
     state.onboardingStep++;
     renderOnboarding();
   } else {
+    hasCompletedOnboarding = true;
+    persistStore();
     openWizard();
   }
 };
@@ -1874,10 +1926,16 @@ function updateDebug(fire, charge) {
   document.getElementById("dbg-state").innerHTML =
     `screen: <b>${state.screen}</b> · stage: <b>${STAGES[state.stageIdx].title}</b><br>` +
     `charge: ${charge.toFixed(2)} · fire: ${fire.toFixed(2)}<br>` +
-    `reps: ${state.current.today} today / ${state.current.lifetime} life`;
+    `reps: ${state.current?.today ?? 0} today / ${state.current?.lifetime ?? 0} life`;
 }
 
 renderHome();
+if (pathways.length > 0) {
+  hasCompletedOnboarding = true;
+  persistStore();
+} else {
+  window.RewirePWA?.maybeShowOnboarding?.();
+}
 requestAnimationFrame(render);
 </script>
 </body>
